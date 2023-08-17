@@ -5,12 +5,8 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "start": "electron-forge start",
-    "package": "electron-forge package",
-    "make": "electron-forge make",
-    "publish": "electron-forge publish",
-    "lint": "echo \"No linting configured\"",
-    "build": "electron-builder build"
+    "start": "tsc && electron-forge start --app-path ./dist/ts/index.js",
+    "build": "tsc && electron-builder build --win"
   },
   "keywords": [],
   "author": {
@@ -18,7 +14,9 @@
     "email": "zac.lucarelli@outlook.com"
   },
   "license": "MIT",
-  "dependencies": {},
+  "dependencies": {
+    "dotenv": "^16.3.1"
+  },
   "devDependencies": {
     "@electron-forge/cli": "^6.2.1",
     "@electron-forge/maker-deb": "^6.2.1",
@@ -27,12 +25,24 @@
     "@electron-forge/maker-zip": "^6.2.1",
     "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
     "electron": "25.3.0",
-    "electron-builder": "^24.4.0"
+    "electron-builder": "^24.4.0",
+    "typescript": "^5.1.6"
   },
   "build": {
     "appId": "pgpt-client",
     "win": {
       "target": "portable"
+    },
+    "directories": {
+      "buildResources": "build",
+      "output": "dist"
+    },
+    "files": [
+      "dist/ts/**/*",
+      "./package.json"
+    ],
+    "extraMetadata": {
+      "main": "dist/ts/index.js"
     }
   }
 }
