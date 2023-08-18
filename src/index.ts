@@ -11,8 +11,8 @@ function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
     width: 1920,
     height: 1080,
-    frame: false,
-    fullscreen: true,
+    // frame: false,
+    // fullscreen: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.ts'),
     },
@@ -22,8 +22,8 @@ function createSurveyWindow(surveyID: string) {
 
   // Use the surveyID to form the URL
   const url = `${process.env.SERVER_URL}/s/${surveyID}`;
-  // mainWindow.loadURL(url);
-  mainWindow.loadURL('https://poly.pizza');
+  console.log(`\n\n\n\n${url}`);
+  mainWindow.loadURL(url);
 
   mainWindow.on('closed', () => {
     mainWindow = null;
@@ -34,10 +34,10 @@ app.on('ready', () => {
   console.log("Loading config...");
   const config = loadConfig();
   console.log(config);
-  let surveyID = config.surveyID;
+  let SurveyID = config.SurveyID;
 
   // Then create the window
-  createSurveyWindow(surveyID);
+  createSurveyWindow(SurveyID);
 });
 
 app.on('window-all-closed', () => {

@@ -5,7 +5,7 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "start": "tsc && electron-forge start --app-path ./dist/ts/index.js",
+    "dev": "tsc && electron-forge start --app-path ./dist/ts/index.js",
     "build": "tsc && electron-builder build --win"
   },
   "keywords": [],

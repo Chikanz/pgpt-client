@@ -8,7 +8,7 @@ export default function loadConfig() {
     const isDevelopment = !app.isPackaged;
 
     const configPath = isDevelopment
-      ? path.join(__dirname, 'mock-config.json') // Adjust this path to your development config
+      ? path.join(__dirname, 'config.json') // Adjust this path to your development config
       : path.join(process.env.PORTABLE_EXECUTABLE_DIR!, 'config.json');
 
       console.log(configPath);
