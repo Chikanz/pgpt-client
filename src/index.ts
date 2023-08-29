@@ -1,10 +1,17 @@
-import { app, BrowserWindow } from 'electron';
+import { app, BrowserWindow, ipcMain } from 'electron';
 import dotenv from 'dotenv';
 import path from 'path';
 const envFile = app.isPackaged ? '.env.production' : ".env.development";
 dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
+import LaunchGame from './LaunchGame';
 
+interface config {
+  SurveyID: string;
+  GamePath: string;
+}
+
+let config: config;
 let mainWindow;
 
 function createSurveyWindow(surveyID: string) {
@@ -14,11 +21,12 @@ function createSurveyWindow(surveyID: string) {
     // frame: false,
     // fullscreen: true,
     webPreferences: {
-      preload: path.join(__dirname, 'preload.ts'),
+      preload: path.join(__dirname, 'preload.js'),
     },
   });
 
-  mainWindow.setFullScreen(true);
+  if (app.isPackaged)
+    mainWindow.setFullScreen(true);
 
   // Use the surveyID to form the URL
   const url = `${process.env.SERVER_URL}/s/${surveyID}`;
@@ -30,13 +38,16 @@ function createSurveyWindow(surveyID: string) {
   });
 }
 
+//Start the game + start recording
+ipcMain.on('run-game', (event, arg) => {
+  LaunchGame(config.GamePath);
+});
+
+// Load the first survey on startup
 app.on('ready', () => {
   console.log("Loading config...");
-  const config = loadConfig();
-  console.log(config);
+  config = loadConfig();
   let SurveyID = config.SurveyID;
-
-  // Then create the window
   createSurveyWindow(SurveyID);
 });
 
