@@ -48,6 +48,10 @@ ipcMain.on('run-game', (event, arg) => {
   StartRecording();
 });
 
+ipcMain.handle('getSources', async () => {
+  return await desktopCapturer.getSources({ types: ['window', 'screen'] })
+})
+
 // Load the first survey on startup
 app.on('ready', () => {
   console.log("Loading config...");

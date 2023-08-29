@@ -12,8 +12,9 @@ export default function StartRecording() {
         width: 1920,
         height: 1080,
         webPreferences: {
-            preload: path.join(__dirname, 'RecorderPreload.js'),
-            nodeIntegration: false,
+            // preload: path.join(__dirname, 'RecorderPreload.js'),
+            nodeIntegration: true,
+            contextIsolation: false, 
         }
     });
 
