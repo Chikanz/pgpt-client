@@ -5,8 +5,8 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "dev": "tsc && electron-forge start --app-path ./dist/ts/index.js",
-    "build": "tsc && electron-builder build --win"
+    "dev": "tsc && ncp src/html dist/ts/html && electron ./dist/ts/index.js",
+    "build": "tsc && ncp src/html dist/ts/html && electron-builder build --win"
   },
   "keywords": [],
   "author": {
@@ -26,6 +26,7 @@
     "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
     "electron": "25.3.0",
     "electron-builder": "^24.4.0",
+    "ncp": "^2.0.0",
     "typescript": "^5.1.6"
   },
   "build": {

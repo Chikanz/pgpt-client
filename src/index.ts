@@ -1,10 +1,11 @@
-import { app, BrowserWindow, ipcMain } from 'electron';
+import { app, BrowserWindow, desktopCapturer, ipcMain } from 'electron';
 import dotenv from 'dotenv';
 import path from 'path';
 const envFile = app.isPackaged ? '.env.production' : ".env.development";
 dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
+import StartRecording from './Recorder/StartRecorder';
 
 interface config {
   SurveyID: string;
@@ -12,21 +13,22 @@ interface config {
 }
 
 let config: config;
-let mainWindow;
+let mainWindow: BrowserWindow;
+let recordingWindow: BrowserWindow;
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
     width: 1920,
     height: 1080,
-    // frame: false,
-    // fullscreen: true,
+    frame: false,
+    fullscreen: true,
     webPreferences: {
       preload: path.join(__dirname, 'preload.js'),
     },
   });
 
-  if (app.isPackaged)
-    mainWindow.setFullScreen(true);
+  // if (app.isPackaged)
+  mainWindow.setFullScreen(true);
 
   // Use the surveyID to form the URL
   const url = `${process.env.SERVER_URL}/s/${surveyID}`;
@@ -40,7 +42,10 @@ function createSurveyWindow(surveyID: string) {
 
 //Start the game + start recording
 ipcMain.on('run-game', (event, arg) => {
+  //Close the main window
+  mainWindow.close();
   LaunchGame(config.GamePath);
+  StartRecording();
 });
 
 // Load the first survey on startup
@@ -51,11 +56,6 @@ app.on('ready', () => {
   createSurveyWindow(SurveyID);
 });
 
-app.on('window-all-closed', () => {
-  if (process.platform !== 'darwin') {
-    app.quit();
-  }
-});
 
 app.on('activate', () => {
   if (mainWindow === null) {
