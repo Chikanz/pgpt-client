@@ -1,1 +1,1 @@
-start cmd.exe /k "cd %cd%"
+start cmd.exe /k "code ."

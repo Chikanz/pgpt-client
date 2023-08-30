@@ -14,7 +14,6 @@ interface config {
 
 let config: config;
 let mainWindow: BrowserWindow;
-let recordingWindow: BrowserWindow;
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
@@ -42,10 +41,14 @@ function createSurveyWindow(surveyID: string) {
 
 //Start the game + start recording
 ipcMain.on('run-game', (event, arg) => {
-  //Close the main window
   mainWindow.close();
-  LaunchGame(config.GamePath);
-  StartRecording();
+  const gameProcess = LaunchGame(config.GamePath);
+  const recordingWindow = StartRecording();
+
+  //When the game closes, close the recording window
+  gameProcess.on('close', () => {
+    recordingWindow.close();
+  });
 });
 
 ipcMain.handle('getSources', async () => {

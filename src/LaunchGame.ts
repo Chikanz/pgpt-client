@@ -2,7 +2,7 @@ import { app } from "electron";
 import path from 'path';
 const { BrowserWindow, desktopCapturer } = require('electron');
 
-const { exec } = require('child_process');
+import {exec} from 'child_process';
 
 export default function LaunchGame(gamePath: string) {
 
@@ -11,7 +11,7 @@ export default function LaunchGame(gamePath: string) {
         ? path.join(process.env.PORTABLE_EXECUTABLE_DIR!, "game", gamePath)
         : path.join(__dirname, "game", gamePath);
 
-    exec(fullGamePath, (error, stdout, stderr) => {
+    const gameProcess = exec(fullGamePath, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing .exe: ${error}`);
             return;
@@ -19,4 +19,6 @@ export default function LaunchGame(gamePath: string) {
         console.log(`stdout: ${stdout}`);
         console.error(`stderr: ${stderr}`);
     });
+
+    return gameProcess;
 }

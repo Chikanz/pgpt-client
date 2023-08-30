@@ -1,20 +1,15 @@
 import { ipcRenderer } from 'electron';
-import { writeFile } from 'fs';
+import { writeFile, existsSync, mkdirSync } from 'fs';
 import path from 'path';
 
-let mediaRecorder;
+let mediaRecorder: MediaRecorder;
 let recordedChunks = [];
 
 const videoElement = document.querySelector('video');
 
 //Start recording on document load
-document.addEventListener('DOMContentLoaded', () => {
-    startRecording();
-
-    //Stop after 2 secs
-    setTimeout(() => {
-        stopRecording();
-    }, 2000);
+document.addEventListener('DOMContentLoaded', async () => {
+    await startRecording();
 });
 
 async function startRecording() {
@@ -25,6 +20,8 @@ async function startRecording() {
     const screenId = screenSource.id;
 
     const constraints = {
+        cursor: 'never',
+        
         audio: {
             mandatory: {
                 chromeMediaSource: 'desktop'
@@ -46,19 +43,27 @@ async function startRecording() {
     videoElement.srcObject = stream;
     await videoElement.play();
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9' });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: 5000000 });
     mediaRecorder.ondataavailable = onDataAvailable;
     mediaRecorder.onstop = stopRecording;
-    mediaRecorder.start();
+    mediaRecorder.start(100);
+    console.log(mediaRecorder.state);
 }
 
 function onDataAvailable(e) {
+    console.log('Pushing chunky');
     recordedChunks.push(e.data);
 }
 
-
-
 async function stopRecording() {
+    if (mediaRecorder && mediaRecorder.state !== 'recording') {
+        console.log("not recording m8");
+        return;
+    }
+
+    mediaRecorder.stop();
+
+    console.log("Stopping recording");
     videoElement.srcObject = null
 
     const blob = new Blob(recordedChunks, {
@@ -66,15 +71,34 @@ async function stopRecording() {
     });
 
     const buffer = Buffer.from(await blob.arrayBuffer());
-    recordedChunks = []
+    recordedChunks = [];
 
     const recordingPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "/recordings/recording.webm");
-    console.log(recordingPath);
-    writeFile(recordingPath, buffer, () => console.log('video saved successfully!'));
+    //Make recording path if it doesn't exist
+    const recordingDir = path.dirname(recordingPath);
+    if (!existsSync(recordingDir)) {
+        mkdirSync(recordingDir, { recursive: true });
+    }
+
+    writeFile(recordingPath, buffer, (err) => {
+        if (err) {
+            console.error('Failed to save video ', err);
+        } else {
+            console.log('video saved successfully!');
+        }
+    });
+
 }
 
-ipcRenderer.on('app-quitting', () => {
-    if (mediaRecorder && mediaRecorder.state === 'recording') {
-        mediaRecorder.stop();
-    }
+ipcRenderer.on('stop-recording', () => {
+    stopRecording();
 });
+
+ipcRenderer.on('app-quitting', () => {
+    stopRecording();
+});
+
+window.addEventListener('beforeunload', () => {
+    stopRecording();
+});
+
