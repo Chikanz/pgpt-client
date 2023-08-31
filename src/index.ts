@@ -6,10 +6,12 @@ dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
 import StartRecording from './Recorder/StartRecorder';
+import UploadVideo from './UploadVideo';
 
 interface config {
   SurveyID: string;
   GamePath: string;
+  PostSurveyID: string;
 }
 
 let config: config;
@@ -30,7 +32,7 @@ function createSurveyWindow(surveyID: string) {
   mainWindow.setFullScreen(true);
 
   // Use the surveyID to form the URL
-  const url = `${process.env.SERVER_URL}/s/${surveyID}`;
+  const url = `http://localhost:5173/s/${surveyID}`;
   console.log(`\n\n\n\n${url}`);
   mainWindow.loadURL(url);
 
@@ -39,16 +41,23 @@ function createSurveyWindow(surveyID: string) {
   });
 }
 
-//Start the game + start recording
-ipcMain.on('run-game', (event, arg) => {
+//Runs on pre and post survey completed.
+let hasFinishedGame = false;
+ipcMain.on('survey-completed', (event, arg) => {
   mainWindow.close();
-  const gameProcess = LaunchGame(config.GamePath);
-  const recordingWindow = StartRecording();
 
-  //When the game closes, close the recording window
-  gameProcess.on('close', () => {
-    recordingWindow.close();
-  });
+  if (!hasFinishedGame) {
+    const gameProcess = LaunchGame(config.GamePath);
+    const recordingWindow = StartRecording();
+
+    //When the game closes, close the recording window + open post survey
+    gameProcess.on('close', () => {
+      hasFinishedGame = true;
+      recordingWindow.close();
+      UploadVideo();
+      createSurveyWindow(config.PostSurveyID);
+    });
+  }
 });
 
 ipcMain.handle('getSources', async () => {

@@ -5,8 +5,8 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "dev": "tsc && ncp src/html dist/ts/html && electron ./dist/ts/index.js",
-    "build": "tsc && ncp src/html dist/ts/html && electron-builder build --win"
+    "dev":  "tsc && ncp src/html dist/ts/html && electron ./dist/ts/index.js",
+    "build":"tsc && ncp src/html dist/ts/html && electron-builder build --win portable"
   },
   "keywords": [],
   "author": {
@@ -31,6 +31,7 @@
   },
   "build": {
     "appId": "pgpt-client",
+    "compression": "store",
     "win": {
       "target": "portable"
     },

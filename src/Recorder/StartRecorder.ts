@@ -11,7 +11,7 @@ export default function StartRecording() {
     RecordingWindow = new BrowserWindow({
         width: 1920,
         height: 1080,
-        // show: false,
+        show: false,
         webPreferences: {
             // preload: path.join(__dirname, 'RecorderPreload.js'),
             nodeIntegration: true,

@@ -2,6 +2,6 @@ const { contextBridge, ipcRenderer } = require('electron');
 
 contextBridge.exposeInMainWorld('electronAPI', {
   surveyCompleted: () => {
-    ipcRenderer.send('run-game');
+    ipcRenderer.send('survey-completed');
   }
 });

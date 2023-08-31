@@ -23,7 +23,8 @@ async function startRecording() {
     const inputSources: Electron.DesktopCapturerSource[] = await ipcRenderer.invoke('getSources');
 
     //Get input where name is Screen 1
-    const screenSource = inputSources.find(source => source.name === 'Screen 1');
+    console.log(inputSources);
+    const screenSource = inputSources.find(source => source.name === 'Screen 1' || source.name === 'Entire screen');
     const screenId = screenSource.id;
 
     const constraints = {
@@ -35,22 +36,26 @@ async function startRecording() {
         video: {
             mandatory: {
                 chromeMediaSource: 'desktop',
-                chromeMediaSourceId: screenId
+                chromeMediaSourceId: screenId,
+                frameRate: { ideal: 42, min: 30},
+                minWidth: 1280,
+                minHeight: 720,
+                maxWidth: 1920,
+                maxHeight: 1080,
             }
-        }
+        },
     };
 
     //@ts-ignore
     const stream = await navigator.mediaDevices.getUserMedia(constraints);
 
-    videoElement.srcObject = stream;
-    await videoElement.play();
+    // videoElement.srcObject = stream;
+    // await videoElement.play();
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType: 'video/webm; codecs=vp9', bitsPerSecond: 5000000 });
+    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=avc1", videoBitsPerSecond: 5000000 });
     mediaRecorder.ondataavailable = onDataAvailable;
     mediaRecorder.onstop = stopRecording;
-    mediaRecorder.start(100);
-    console.log(mediaRecorder.state);
+    mediaRecorder.start(2000);
 }
 
 function onDataAvailable(e) {
