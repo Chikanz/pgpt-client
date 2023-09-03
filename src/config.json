@@ -1,5 +1,6 @@
 {
-    "SurveyID": "123",
+    "TestID": "123",
+    "PlayerID: "123",
+    "AccessToken: "asdadad",
     "GamePath": "Build.exe",
-    "PostSurveyID": "123"
 }
