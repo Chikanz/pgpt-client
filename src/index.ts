@@ -7,14 +7,9 @@ import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
 import StartRecording from './Recorder/StartRecorder';
 import UploadVideo from './UploadVideo';
+import type configType from './types/config';
 
-interface config {
-  SurveyID: string;
-  GamePath: string;
-  PostSurveyID: string;
-}
-
-let config: config;
+let config: configType;
 let mainWindow: BrowserWindow;
 
 function createSurveyWindow(surveyID: string) {
@@ -54,7 +49,7 @@ ipcMain.on('survey-completed', (event, arg) => {
     gameProcess.on('close', () => {
       hasFinishedGame = true;
       recordingWindow.close();
-      UploadVideo();
+      UploadVideo(config);
       createSurveyWindow(config.PostSurveyID);
     });
   }
