@@ -1,5 +1,5 @@
-import axios from "axios";
-import config from "./types/config";
+import axios, { AxiosError } from "axios";
+import {config} from "./types/config";
 import tus from 'tus-js-client';
 import fs from 'fs';
 
@@ -17,7 +17,10 @@ export default async function UploadVideo(config: config) {
     const res = await axios.post(`${process.env.SERVER_URL}/api/client/startUpload`, {
         TestID: config.TestID,
         PlayerID: config.PlayerID,
-    }).catch(e => { console.log(e)});
+    }).catch((e : AxiosError) => { 
+        console.log(e.response?.data);
+        return null;
+    });
 
     const UploadHeaders: uploadResponse = res.data;
 

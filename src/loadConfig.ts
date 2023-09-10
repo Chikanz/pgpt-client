@@ -1,6 +1,7 @@
 import { app } from 'electron';
 import fs from 'fs';
 import path from 'path';
+import { config, configSchema } from './types/config';
 
 export default function loadConfig() {
   try {
@@ -15,9 +16,19 @@ export default function loadConfig() {
       throw new Error(`Config file not found at ${configPath}`);
     }
 
+    //enforce schema with zod
     const rawData = fs.readFileSync(configPath, 'utf-8');
 
-    return JSON.parse(rawData);
+    let config: any;
+    try {
+      console.log(rawData);
+      config = configSchema.parse(JSON.parse(rawData));
+    }
+    catch (err) {
+      throw new Error("Config file is invalid");
+    }
+
+    return config;
   }
   catch (err) {
     console.log("Couldn't read config file")

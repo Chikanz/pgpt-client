@@ -107,6 +107,7 @@ async function onAudioDataAvailable(e) {
 }
 
 async function stopRecording() {
+    console.log("Stopping recording");
     if (mediaRecorder && mediaRecorder.state !== 'recording') {
         console.log("not recording m8");
         return;
@@ -125,16 +126,14 @@ async function stopRecording() {
     mediaRecorder.stop();
     writable.end();
     console.log("Stopped recording");
+    ipcRenderer.send('recording-saved');
 }
 
 ipcRenderer.on('stop-recording', () => {
+    console.log("Before Stop recording!");
     stopRecording();
 });
 
 ipcRenderer.on('app-quitting', () => {
-    stopRecording();
-});
-
-window.addEventListener('beforeunload', () => {
     stopRecording();
 });
