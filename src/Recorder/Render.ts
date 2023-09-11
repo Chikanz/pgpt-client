@@ -28,17 +28,26 @@ async function startRecording() {
     // videoElement.srcObject = stream;
     // await videoElement.play();
 
-    const stream = await GetScreenStream();
+    const desktopStream = await GetScreenStream();
 
-    mediaRecorder = new MediaRecorder(stream, { mimeType: "video/webm;codecs=avc1", videoBitsPerSecond: 5000000 });
+    const audioStream = await getMicStream();
+    console.log(audioStream);
+    audioMediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
+    audioMediaRecorder.ondataavailable = onAudioDataAvailable;
+    audioMediaRecorder.onerror = console.error;
+    audioMediaRecorder.start(2000);
+
+    // Combine into a new MediaStream
+    const combinedStream = new MediaStream([
+        ...desktopStream.getVideoTracks(),
+        ...audioStream.getAudioTracks(),
+        ...desktopStream.getAudioTracks(),
+    ]);
+
+    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: "video/webm;codecs=avc1,opus", videoBitsPerSecond: 5000000 });
     mediaRecorder.ondataavailable = onDataAvailable;
     mediaRecorder.onstop = stopRecording;
     mediaRecorder.start(2000);
-
-    const audioStream = await getMicStream();
-    audioMediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
-    audioMediaRecorder.ondataavailable = onAudioDataAvailable;
-    audioMediaRecorder.start();
 }
 
 async function listAudioDevices() {
@@ -48,16 +57,10 @@ async function listAudioDevices() {
 
 async function getMicStream() {
     const devices = await listAudioDevices();
-    const mic = devices.filter(d => d.label.includes("Microphone (Blue Snowball)"));
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: mic[0].deviceId } });
+    const mic = devices[0];
+    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: mic.deviceId } });
     return stream;
 }
-
-async function getWebcamStream() {
-    const stream = await navigator.mediaDevices.getUserMedia({ video: true });
-    return stream;
-}
-
 
 async function GetScreenStream() {
     const inputSources: Electron.DesktopCapturerSource[] = await ipcRenderer.invoke('getSources');
@@ -94,7 +97,6 @@ async function GetScreenStream() {
 async function onDataAvailable(e) {
     console.log('Pushing chunky');
     const blob = e.data;
-    // chunks.push(blob);
     const AB = await blob.arrayBuffer();
     writable.write(Buffer.from(AB));
 }

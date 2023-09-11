@@ -6,11 +6,13 @@ dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
 import StartRecording from './Recorder/StartRecorder';
-import UploadVideo from './UploadVideo';
+import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
 
 let config: configType;
 let mainWindow: BrowserWindow;
+
+let canKill = false; //Only true once we finish uploading
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
@@ -56,7 +58,10 @@ ipcMain.on('survey-completed', (event, arg) => {
       ipcMain.once('recording-saved', () => {
         console.log("Recording saved, uploading...");
         recordingWindow.close();
-        UploadVideo(config);
+        UploadVideo(config).then(() => {
+          console.log("Uploaded!");
+          canKill = true;
+        });
       });
     });
   }
