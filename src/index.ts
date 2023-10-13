@@ -5,9 +5,10 @@ const envFile = app.isPackaged ? '.env.production' : ".env.development";
 dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
-import StartRecording from './Recorder/StartRecorder';
+import OpenRecordingSelector from './Recorder/StartRecorder';
 import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
+import * as obs from './Recorder/OBSRecorder';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -40,36 +41,43 @@ function createSurveyWindow(surveyID: string) {
 
 //Runs on pre and post survey completed.
 let hasFinishedGame = false;
+let recordingWindow: BrowserWindow;
 ipcMain.on('survey-completed', (event, arg) => {
   mainWindow.close();
 
   if (!hasFinishedGame) {
-    const gameProcess = LaunchGame(config.GamePath);
-    const recordingWindow = StartRecording();
-
-    //When the game closes, close the recording window + open post survey
-    gameProcess.on('close', () => {
-      hasFinishedGame = true;
-      //send save event to recording window
-      recordingWindow.webContents.send('stop-recording');
-      createSurveyWindow(config.PostSurveyID);
-
-      // Listen for the 'recording-stopped' event from the recording window renderer process
-      ipcMain.once('recording-saved', () => {
-        console.log("Recording saved, uploading...");
-        recordingWindow.close();
-        UploadVideo(config).then(() => {
-          console.log("Uploaded!");
-          canKill = true;
-        });
-      });
-    });
+    //Open a window for the user to select their microphone and camera
+    recordingWindow = OpenRecordingSelector();
   }
 });
 
-ipcMain.handle('getSources', async () => {
-  return await desktopCapturer.getSources({ types: ['window', 'screen'] })
-})
+ipcMain.on('start-recording', (event, arg) => {
+  //Get mic and camera name from arg
+  const micName = arg[0];
+  const cameraName = arg[1]; //todo
+
+  //Fire up obs
+  obs.initialize(micName);
+  obs.start();
+  recordingWindow.close();
+
+  //Start the game
+  const gameProcess = LaunchGame(config.GamePath);
+
+  console.log('a');
+
+  //When the game closes, stop OBS + open post survey
+  gameProcess.on('close', () => {
+    hasFinishedGame = true;
+    createSurveyWindow(config.PostSurveyID);
+    obs.stop();
+    obs.shutdown();
+
+    UploadVideo(config).then(() => {
+      canKill = true;
+    });
+  });
+});
 
 // Load the first survey on startup
 app.on('ready', () => {
@@ -90,5 +98,12 @@ app.on('activate', () => {
   if (mainWindow === null) {
     console.log("activate");
     createSurveyWindow("123");
+  }
+});
+
+app.on('window-all-closed', (e) => {
+  if (!canKill) {
+    e.preventDefault();
+    // Prevent default behavior
   }
 });

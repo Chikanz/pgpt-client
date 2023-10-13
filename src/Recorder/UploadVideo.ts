@@ -24,8 +24,18 @@ export default async function UploadVideo(config: config) {
 
     const UploadHeaders: uploadResponse = res.data;
 
-    //Load file from /recordings/recording.webm
-    const file = fs.createReadStream(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recordings/recording.webm`)
+    //OBS sets the video file to a date that we don't know so we can just find the first mp4 file in the recordings folder
+    
+    const files = fs.readdirSync(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recordings`);
+    let filename;
+    for (const file of files) {
+        if (file.endsWith(".mp4")) {
+            filename = file;
+            console.log(file);
+            break;
+        }
+    }
+    const file = fs.createReadStream(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recordings/${filename}`)
 
     //Then upload the video using TUS
     const { Title, ...headers } = UploadHeaders;

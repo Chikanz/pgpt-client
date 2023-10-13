@@ -1,141 +1,66 @@
 import { ipcRenderer } from 'electron';
-import { createWriteStream, existsSync, mkdirSync } from 'fs';
-import { writeFile } from 'original-fs';
-import path from 'path';
 
-let mediaRecorder: MediaRecorder;
-let videoElement = document.querySelector('video');
+document.addEventListener('DOMContentLoaded', () => {
+    const microphonesSelect = document.getElementById('microphones') as HTMLSelectElement;
+    const camerasSelect = document.getElementById('cameras') as HTMLSelectElement;
+    const videoElement = document.getElementById('preview') as HTMLVideoElement;
+    const videoToggle = document.getElementById('videoToggle');
+    const startButton = document.getElementById('start');
+    let videoEnabled = false;
 
-const recordingPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "/recordings/recording.webm");
-const recordingDir = path.dirname(recordingPath);
+    videoElement.style.display = 'none';
 
-let audioMediaRecorder: MediaRecorder;
-const audioRecordingPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "/recordings/microphone.webm");
-const audioWritable = createWriteStream(audioRecordingPath);
+    navigator.mediaDevices.enumerateDevices()
+        .then(devices => {
+            devices.forEach(device => {
+                const option = document.createElement('option');
+                option.value = device.deviceId;
+                option.textContent = device.label;
 
-if (!existsSync(recordingDir)) {
-    mkdirSync(recordingDir, { recursive: true });
-}
+                if (device.kind === 'audioinput') {
+                    microphonesSelect.appendChild(option);
+                } else if (device.kind === 'videoinput') {
+                    camerasSelect.appendChild(option.cloneNode(true));
+                }
+            });
+        });
 
-const writable = createWriteStream(recordingPath);
+    videoToggle.addEventListener('click', () => {
+        videoEnabled = !videoEnabled;
+        videoElement.style.display = videoEnabled ? 'block' : 'none';
+        updatePreview();
+    });
 
-// Start recording on document load
-document.addEventListener('DOMContentLoaded', async () => {
-    await startRecording();
-});
+    microphonesSelect.addEventListener('change', updatePreview);
+    camerasSelect.addEventListener('change', updatePreview);
 
-async function startRecording() {
-    // videoElement.srcObject = stream;
-    // await videoElement.play();
+    function updatePreview() {
+        if (videoEnabled) {
+            const audioSource = microphonesSelect.value;
+            const videoSource = camerasSelect.value;
+            const constraints = {
+                audio: { deviceId: audioSource ? { exact: audioSource } : undefined },
+                video: { deviceId: videoSource ? { exact: videoSource } : undefined }
+            };
 
-    const desktopStream = await GetScreenStream();
-
-    const audioStream = await getMicStream();
-    console.log(audioStream);
-    audioMediaRecorder = new MediaRecorder(audioStream, { mimeType: 'audio/webm;codecs=opus' });
-    audioMediaRecorder.ondataavailable = onAudioDataAvailable;
-    audioMediaRecorder.onerror = console.error;
-    audioMediaRecorder.start(2000);
-
-    // Combine into a new MediaStream
-    const combinedStream = new MediaStream([
-        ...desktopStream.getVideoTracks(),
-        ...audioStream.getAudioTracks(),
-        ...desktopStream.getAudioTracks(),
-    ]);
-
-    mediaRecorder = new MediaRecorder(combinedStream, { mimeType: "video/webm;codecs=avc1,opus", videoBitsPerSecond: 5000000 });
-    mediaRecorder.ondataavailable = onDataAvailable;
-    mediaRecorder.onstop = stopRecording;
-    mediaRecorder.start(2000);
-}
-
-async function listAudioDevices() {
-    const devices = await navigator.mediaDevices.enumerateDevices();
-    return devices.filter(device => device.kind === 'audioinput');
-}
-
-async function getMicStream() {
-    const devices = await listAudioDevices();
-    const mic = devices[0];
-    const stream = await navigator.mediaDevices.getUserMedia({ audio: { deviceId: mic.deviceId } });
-    return stream;
-}
-
-async function GetScreenStream() {
-    const inputSources: Electron.DesktopCapturerSource[] = await ipcRenderer.invoke('getSources');
-
-    //Get input where name is Screen 1
-    console.log(inputSources);
-    const screenSource = inputSources.find(source => source.name === 'Screen 1' || source.name === 'Entire screen');
-    const screenId = screenSource.id;
-
-    const constraints = {
-        audio: {
-            mandatory: {
-                chromeMediaSource: 'desktop'
-            }
-        },
-        video: {
-            mandatory: {
-                chromeMediaSource: 'desktop',
-                chromeMediaSourceId: screenId,
-                frameRate: { ideal: 50, min: 30 },
-                minWidth: 1280,
-                minHeight: 720,
-                maxWidth: 1920,
-                maxHeight: 1080,
-            }
-        },
-    };
-
-    //@ts-ignore
-    return await navigator.mediaDevices.getUserMedia(constraints);
-}
-
-// let chunks: Blob[] = [];
-async function onDataAvailable(e) {
-    console.log('Pushing chunky');
-    const blob = e.data;
-    const AB = await blob.arrayBuffer();
-    writable.write(Buffer.from(AB));
-}
-
-async function onAudioDataAvailable(e) {
-    console.log('Audio chunk in');
-    const audioBlob = e.data;
-    const audioAB = await audioBlob.arrayBuffer();
-    audioWritable.write(Buffer.from(audioAB));
-}
-
-async function stopRecording() {
-    console.log("Stopping recording");
-    if (mediaRecorder && mediaRecorder.state !== 'recording') {
-        console.log("not recording m8");
-        return;
+            navigator.mediaDevices.getUserMedia(constraints)
+                .then(stream => {
+                    videoElement.srcObject = stream;
+                })
+                .catch(error => {
+                    console.error('Error accessing media devices.', error);
+                });
+        } else if (videoElement.srcObject) {
+            const mediaStream = videoElement.srcObject as MediaStream;
+            mediaStream.getTracks().forEach(track => track.stop());
+        }
     }
-
-    audioMediaRecorder.stop();
-    audioWritable.end();
-
-    //Write the chunks to the file
-    // const blob = new Blob(chunks, {
-    //     type: 'video/webm; codecs=avc1'
-    //   });
-    // const buffer = Buffer.from(await blob.arrayBuffer());
-    // writeFile(recordingPath, buffer, () => console.log('video saved successfully!'));
-
-    mediaRecorder.stop();
-    writable.end();
-    console.log("Stopped recording");
-    ipcRenderer.send('recording-saved');
-}
-
-ipcRenderer.on('stop-recording', () => {
-    console.log("Before Stop recording!");
-    stopRecording();
-});
-
-ipcRenderer.on('app-quitting', () => {
-    stopRecording();
+    //Start the recording when the button is pressed  
+    startButton.addEventListener('click', () => {
+        videoEnabled = false;
+        updatePreview();
+        console.log("~~~~~",microphonesSelect.value);
+        ipcRenderer.send('start-recording', [microphonesSelect.value, camerasSelect.value]);
+        startButton.innerHTML = "Just a sec..."; //todo nicer loading screen
+    });
 });
