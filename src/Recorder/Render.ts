@@ -1,5 +1,7 @@
 import { ipcRenderer } from 'electron';
 
+//Todo make this a multi stage process so that we can kill the video camera in time
+
 document.addEventListener('DOMContentLoaded', () => {
     const microphonesSelect = document.getElementById('microphones') as HTMLSelectElement;
     const camerasSelect = document.getElementById('cameras') as HTMLSelectElement;
@@ -57,10 +59,15 @@ document.addEventListener('DOMContentLoaded', () => {
     }
     //Start the recording when the button is pressed  
     startButton.addEventListener('click', () => {
+        //Disable the video while OBS boots up otherwise it won't work!
         videoEnabled = false;
-        updatePreview();
-        console.log("~~~~~",microphonesSelect.value);
-        ipcRenderer.send('start-recording', [microphonesSelect.value, camerasSelect.value]);
+        updatePreview(); 
+
+        const selectedMicLabel = microphonesSelect.options[microphonesSelect.selectedIndex].textContent;
+        const match = selectedMicLabel.match(/\((.*?)\)/); //Get the mic name from the label
+        const cleanMicName = match ? match[1] : "Unknown";
+        console.log(cleanMicName);
         startButton.innerHTML = "Just a sec..."; //todo nicer loading screen
+        ipcRenderer.send('start-recording', [cleanMicName, camerasSelect.value]);
     });
 });

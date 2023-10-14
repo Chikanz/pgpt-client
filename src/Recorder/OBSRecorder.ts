@@ -5,11 +5,8 @@ import { byOS, OS, getOS } from './operating-systems';
 
 import * as osn from 'obs-studio-node';
 import { v4 as uuid } from 'uuid';
-import { app } from 'electron';
 import fs from 'fs';
-const recordingPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "/recordings");
-const videoPath = path.dirname(recordingPath);
-
+const videoPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "recordings");
 
 let obsInitialized = false;
 let scene = null;
@@ -20,7 +17,7 @@ function fixPathWhenPackaged(p) {
 }
 
 // Init the library, launch OBS Studio instance, configure it, set up sources and scene
-function initialize(micname: string) {
+function initialize(micname: string, win?: Electron.BrowserWindow) {
   if (obsInitialized) {
     console.warn("OBS is already initialized, skipping initialization.");
     return;
@@ -32,11 +29,13 @@ function initialize(micname: string) {
   setupSources(micname);
   obsInitialized = true;
 
-  // const perfStatTimer = setInterval(() => {
-  //   win.webContents.send("performanceStatistics", osn.NodeObs.OBS_API_getPerformanceStatistics());
-  // }, 1000);
+  if(win) {
+    const perfStatTimer = setInterval(() => {
+      win.webContents.send("performanceStatistics", osn.NodeObs.OBS_API_getPerformanceStatistics());
+    }, 1000);
+    win.on('close', () => clearInterval(perfStatTimer));
+  }
 
-  // win.on('close', () => clearInterval(perfStatTimer));
 }
 
 function initOBS() {
@@ -78,17 +77,40 @@ function initOBS() {
 
 function configureOBS() {
   console.debug('Configuring OBS');
-  setSetting('Output', 'Mode', 'Simple');
+  setSetting('Output', 'Mode', 'Advanced');
+  console.log(getAvailableValues('Output', 'Recording', 'RecEncoder'));
   const availableEncoders = getAvailableValues('Output', 'Recording', 'RecEncoder');
-  console.log('Available encoders', availableEncoders);
-  setSetting('Output', 'RecEncoder', availableEncoders.slice(-1)[0] || 'x264');
+  setSetting('Output', 'RecEncoder', prioritizeEncoder(availableEncoders));
   setSetting('Output', 'RecFilePath', videoPath);
   setSetting('Output', 'RecFormat', 'mp4');
-  setSetting('Output', 'VBitrate', 15000);
-  setSetting('Video', 'FPSCommon', 45);
-  // setSetting('Video', 'FPSCommon', 60);
+  const bitrate = 8000;
+  setSetting('Output', 'Recbitrate', bitrate);
+  setSetting('Output', 'Recmax_bitrate', bitrate);
+  setSetting('Video', 'FPSType', "Integer FPS Value");
+  setSetting('Video', 'FPSInt', 50);
 
   console.debug('OBS Configured');
+}
+
+function prioritizeEncoder(availableEncoders: string[]): string | null {
+  const priorityList = [
+    'jim_hevc_nvenc',
+    'jim_nvenc',
+    'amd_amf_hvec',
+    'amd_amf_h264',
+    'ffmpeg_nvenc',
+    'obs_x264',
+    'none'
+  ];
+
+  for (const preferredEncoder of priorityList) {
+    if (availableEncoders.includes(preferredEncoder)) {
+      console.log("Chose encoder: " + preferredEncoder);
+      return preferredEncoder;
+    }
+  }
+
+  return null; // return null if no encoder is found in the list
 }
 
 function isVirtualCamPluginInstalled() {

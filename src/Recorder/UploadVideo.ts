@@ -55,7 +55,7 @@ async function TUSUpload(file: fs.ReadStream, headers: headers, title: string) {
             retryDelays: [0, 3000, 5000, 10000, 20000, 60000, 60000],
             headers,
             metadata: {
-                filetype: "video/webm",
+                filetype: "video/mp4",
                 title: title,
             },
             onError: reject,

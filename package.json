@@ -17,11 +17,12 @@
   "dependencies": {
     "axios": "^1.5.0",
     "dotenv": "^16.3.1",
-    "tus-js-client": "^3.1.1",
-    "zod": "^3.22.2",
-    "obs-studio-node": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.22.1-release-win64.tar.gz",
+    "fluent-ffmpeg": "^2.1.2",
+    "obs-studio-node": "https://s3-us-west-2.amazonaws.com/obsstudionodes3.streamlabs.com/osn-0.23.71-release-win64.tar.gz",
     "rxjs": "^6.6.3",
-    "uuid": "^8.3.0"
+    "tus-js-client": "^3.1.1",
+    "uuid": "^8.3.0",
+    "zod": "^3.22.2"
   },
   "devDependencies": {
     "@electron-forge/cli": "^6.2.1",
@@ -30,6 +31,7 @@
     "@electron-forge/maker-squirrel": "^6.2.1",
     "@electron-forge/maker-zip": "^6.2.1",
     "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
+    "@types/fluent-ffmpeg": "^2.1.22",
     "electron": "25.3.0",
     "electron-builder": "^24.4.0",
     "ncp": "^2.0.0",
@@ -51,6 +53,9 @@
     ],
     "extraMetadata": {
       "main": "dist/ts/index.js"
-    }
+    },
+    "extraResources": [
+      "bin/**"
+    ]
   }
 }

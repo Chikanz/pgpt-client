@@ -9,6 +9,7 @@ import OpenRecordingSelector from './Recorder/StartRecorder';
 import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
 import * as obs from './Recorder/OBSRecorder';
+import mic from './Recorder/mic';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -56,26 +57,50 @@ ipcMain.on('start-recording', (event, arg) => {
   const micName = arg[0];
   const cameraName = arg[1]; //todo
 
+  //if debug open obs debug window
+  let debugWindow: BrowserWindow;
+  if (process.env.DEBUG || true) {
+    debugWindow = new BrowserWindow({
+      width: 800,
+      height: 600,
+      webPreferences: {
+        nodeIntegration: true,
+        contextIsolation: false,
+      }
+    });
+    debugWindow.loadFile(path.join(__dirname, 'html/obsDebug.html'));
+
+    ipcMain.handle('preview-init', (event, bounds) => {
+      return obs.setupPreview(debugWindow, bounds);
+    });
+
+    ipcMain.handle('preview-bounds', (event, bounds) => {
+      return obs.resizePreview(debugWindow, bounds);
+    });
+  }
+
   //Fire up obs
-  obs.initialize(micName);
+  obs.initialize(micName, debugWindow);
   obs.start();
+  mic.start(micName);
   recordingWindow.close();
 
   //Start the game
   const gameProcess = LaunchGame(config.GamePath);
 
-  console.log('a');
-
   //When the game closes, stop OBS + open post survey
   gameProcess.on('close', () => {
     hasFinishedGame = true;
+    debugWindow.close();
     createSurveyWindow(config.PostSurveyID);
     obs.stop();
+    mic.stop();
     obs.shutdown();
 
-    UploadVideo(config).then(() => {
-      canKill = true;
-    });
+    canKill = true;
+    // UploadVideo(config).then(() => {
+    //   canKill = true;
+    // });
   });
 });
 
@@ -104,6 +129,17 @@ app.on('activate', () => {
 app.on('window-all-closed', (e) => {
   if (!canKill) {
     e.preventDefault();
-    // Prevent default behavior
+    //Poll every 5 seconds to see if we can close
+    const interval = setInterval(() => {
+      if (canKill) {
+        clearInterval(interval);
+        console.log("See ya later!");
+        app.quit();
+      }
+    }, 5000);
+  }
+  else {
+    console.log("See ya later!");
+    app.quit();
   }
 });
