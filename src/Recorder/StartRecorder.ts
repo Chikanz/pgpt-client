@@ -19,8 +19,6 @@ export default function OpenRecordingSelector() {
         }
     });
 
-    RecordingWindow.webContents.openDevTools();
-
     RecordingWindow.loadFile(path.join(__dirname, '..', 'html', 'recorder.html')).catch(e => {
         console.error("Error loading file: ", e);
     });

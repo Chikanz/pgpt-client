@@ -5,8 +5,8 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "dev": "tsc && ncp src/html dist/ts/html && electron ./dist/ts/index.js",
-    "build": "tsc && ncp src/html dist/ts/html && electron-builder build --win portable"
+    "dev": "node scripts/build.js && electron ./dist/ts/index.js",
+    "build": "node scripts/build.js && electron-builder build --win portable"
   },
   "keywords": [],
   "author": {

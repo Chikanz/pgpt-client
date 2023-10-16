@@ -81,6 +81,7 @@ ipcMain.on('start-recording', (event, arg) => {
 
   //Fire up obs
   obs.initialize(micName, debugWindow);
+  if(debugWindow) debugWindow.webContents.send("encoders", obs.GetEncoders());
   obs.start();
   mic.start(micName);
   recordingWindow.close();

@@ -75,6 +75,10 @@ function initOBS() {
   console.debug('OBS initialized');
 }
 
+function GetEncoders(){
+  return getAvailableValues('Output', 'Recording', 'RecEncoder');
+}
+
 function configureOBS() {
   console.debug('Configuring OBS');
   setSetting('Output', 'Mode', 'Advanced');
@@ -494,6 +498,7 @@ export {
   stop,
   shutdown,
   setupPreview,
-  resizePreview
+  resizePreview,
+  GetEncoders
 };
 

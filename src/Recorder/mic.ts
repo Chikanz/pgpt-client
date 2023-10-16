@@ -14,7 +14,7 @@ function start(micname: string) {
     command = ffmpeg()
         .input(`audio=Microphone (${micname})`)
         .inputFormat('dshow')
-        .audioCodec('pcm_s16le')
+        .audioCodec('libopus')
         .save('microphone.webm')
         .on('end', () => {
             console.log('Recording finished');

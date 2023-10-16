@@ -18,6 +18,17 @@ function onPerformanceStatistics(data) {
   
 }
 
+ipcRenderer.on("encoders", (_event, data) => {
+  //Just list all encoders in a p element at the bottom of the page
+  const encoders = document.querySelector("#encoders");
+  encoders.innerHTML = "";
+  for (const encoder of data) {
+    const p = document.createElement("p");
+    p.innerText = encoder;
+    encoders.appendChild(p);
+  }
+});
+
 //Start the stop watch timer on the rec-timer element
 const timer = document.querySelector("#rec-timer");
 const startTime = Date.now();
