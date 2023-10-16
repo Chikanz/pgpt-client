@@ -6,7 +6,9 @@ import { byOS, OS, getOS } from './operating-systems';
 import * as osn from 'obs-studio-node';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
-const videoPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || __dirname, "recordings");
+import { app } from 'electron';
+
+const videoPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || app.getAppPath(), "recording");
 
 let obsInitialized = false;
 let scene = null;
@@ -46,10 +48,6 @@ function initOBS() {
   osn.NodeObs.SetWorkingDirectory(workingPath);
 
   const obsDataPath = fixPathWhenPackaged(path.join(__dirname, 'osn-data')); // OBS Studio configs and logs
-  //Make obs data path if it doesn't exist
-  if (!fs.existsSync(obsDataPath)) {
-    fs.mkdirSync(obsDataPath);
-  }
   // Arguments: locale, path to directory where configuration and logs will be stored, your application version
   const initResult = osn.NodeObs.OBS_API_initAPI('en-US', obsDataPath, '1.0.0','');
 

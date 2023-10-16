@@ -6,10 +6,10 @@ async function runAll() {
     try {
         await runCommand("tsc");
         await runCommand("ncp src/html dist/ts/html"); //Copy over the html files
-        //Copy over FFMPEG to dist/ts/bin/ (the folder doesn't exist so make it)
-        const targetPath = "dist/ts/bin/ffmpeg.exe";
+        //Copy over FFMPEG folder to dist/ts/bin/ (the folder doesn't exist so make it)
+        const targetPath = "dist/ts/bin";
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
-        fs.copyFileSync("bin/ffmpeg.exe", targetPath);
+        await runCommand(`ncp bin/ ${targetPath}`); //Copy over ffmpeg + libs
 
     } catch (error) {
         console.error(`Failed to run all commands: ${error}`);

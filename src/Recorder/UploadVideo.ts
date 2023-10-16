@@ -26,7 +26,7 @@ export default async function UploadVideo(config: config) {
 
     //OBS sets the video file to a date that we don't know so we can just find the first mp4 file in the recordings folder
     
-    const files = fs.readdirSync(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recordings`);
+    const files = fs.readdirSync(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recording`);
     let filename;
     for (const file of files) {
         if (file.endsWith(".mp4")) {
@@ -35,7 +35,7 @@ export default async function UploadVideo(config: config) {
             break;
         }
     }
-    const file = fs.createReadStream(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recordings/${filename}`)
+    const file = fs.createReadStream(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recording/${filename}`)
 
     //Then upload the video using TUS
     const { Title, ...headers } = UploadHeaders;

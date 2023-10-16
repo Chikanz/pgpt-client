@@ -10,11 +10,12 @@ import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
 import * as obs from './Recorder/OBSRecorder';
 import mic from './Recorder/mic';
+import fs from 'fs';
 
 let config: configType;
 let mainWindow: BrowserWindow;
 
-let canKill = false; //Only true once we finish uploading
+let canKill = true; //true if we kill the app before the game starts, then only true after upload
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
@@ -57,6 +58,10 @@ ipcMain.on('start-recording', (event, arg) => {
   const micName = arg[0];
   const cameraName = arg[1]; //todo
 
+  //Create the recording dir
+  const recPath = path.join(app.getAppPath(), 'recording');
+  fs.mkdirSync(recPath, { recursive: true })
+
   //if debug open obs debug window
   let debugWindow: BrowserWindow;
   if (process.env.DEBUG || true) {
@@ -88,6 +93,7 @@ ipcMain.on('start-recording', (event, arg) => {
 
   //Start the game
   const gameProcess = LaunchGame(config.GamePath);
+  canKill = false;
 
   //When the game closes, stop OBS + open post survey
   gameProcess.on('close', () => {
