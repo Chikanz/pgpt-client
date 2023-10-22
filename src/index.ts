@@ -11,11 +11,20 @@ import type { config as configType } from './types/config';
 import * as obs from './Recorder/OBSRecorder';
 import mic from './Recorder/mic';
 import fs from 'fs';
+import { rootExePath } from './paths';
 
 let config: configType;
 let mainWindow: BrowserWindow;
 
 let canKill = true; //true if we kill the app before the game starts, then only true after upload
+
+//Replace all console logs with a log file
+const logStream = fs.createWriteStream(`${rootExePath}/main.log`, { flags: 'a' });
+
+console.log = function(msg) {
+  if(app.isPackaged) logStream.write(msg + '\n');
+  process.stdout.write(msg + '\n');
+};
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
@@ -54,17 +63,20 @@ ipcMain.on('survey-completed', (event, arg) => {
 });
 
 ipcMain.on('start-recording', (event, arg) => {
+  console.log("Starting recording")
   //Get mic and camera name from arg
   const micName = arg[0];
   const cameraName = arg[1]; //todo
 
   //Create the recording dir
-  const recPath = path.join(app.getAppPath(), 'recording');
+  console.log("Opening OBS debug window...");
+  const recPath = path.join(rootExePath, 'recording');
   fs.mkdirSync(recPath, { recursive: true })
 
   //if debug open obs debug window
   let debugWindow: BrowserWindow;
   if (process.env.DEBUG || true) {
+    console.log("Opening OBS debug window...");
     debugWindow = new BrowserWindow({
       width: 800,
       height: 600,
@@ -85,10 +97,11 @@ ipcMain.on('start-recording', (event, arg) => {
   }
 
   //Fire up obs
+  console.log("Starting OBS...");
   obs.initialize(micName, debugWindow);
   if(debugWindow) debugWindow.webContents.send("encoders", obs.GetEncoders());
-  obs.start();
   mic.start(micName);
+  obs.start();
   recordingWindow.close();
 
   //Start the game
@@ -118,20 +131,14 @@ app.on('ready', () => {
     config = loadConfig();
   }
   catch (err) {
+    console.log("Quitting due to config error: "+ err.message);
     app.quit();
+    return;
   }
-  console.log(config);
   let SurveyID = config.SurveyID;
   createSurveyWindow(SurveyID);
 });
 
-
-app.on('activate', () => {
-  if (mainWindow === null) {
-    console.log("activate");
-    createSurveyWindow("123");
-  }
-});
 
 app.on('window-all-closed', (e) => {
   if (!canKill) {

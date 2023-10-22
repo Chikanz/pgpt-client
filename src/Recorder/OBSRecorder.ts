@@ -80,8 +80,7 @@ function GetEncoders(){
 function configureOBS() {
   console.debug('Configuring OBS');
   setSetting('Output', 'Mode', 'Advanced');
-  console.log(getAvailableValues('Output', 'Recording', 'RecEncoder'));
-  const availableEncoders = getAvailableValues('Output', 'Recording', 'RecEncoder');
+  const availableEncoders = GetEncoders();
   setSetting('Output', 'RecEncoder', prioritizeEncoder(availableEncoders));
   setSetting('Output', 'RecFilePath', videoPath);
   setSetting('Output', 'RecFormat', 'mp4');

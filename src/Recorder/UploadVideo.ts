@@ -14,7 +14,7 @@ interface uploadResponse {
 
 export default async function UploadVideo(config: config) {
     //First tell server we're uploading a vid and get the key
-    const res = await axios.post(`${process.env.SERVER_URL}/api/client/startUpload`, {
+    const res = await axios.post(`${process.env.SERVER_URL}/api/client/gameplay`, {
         TestID: config.TestID,
         PlayerID: config.PlayerID,
     }).catch((e: AxiosError) => {
