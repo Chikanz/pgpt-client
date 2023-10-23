@@ -9,9 +9,10 @@ import OpenRecordingSelector from './Recorder/StartRecorder';
 import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
 import * as obs from './Recorder/OBSRecorder';
-import mic from './Recorder/mic';
+import mic from './Recorder/recordmic';
 import fs from 'fs';
 import { rootExePath } from './paths';
+import ripMic from './Recorder/ripMic';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -21,10 +22,44 @@ let canKill = true; //true if we kill the app before the game starts, then only 
 //Replace all console logs with a log file
 const logStream = fs.createWriteStream(`${rootExePath}/main.log`, { flags: 'a' });
 
-console.log = function(msg) {
-  if(app.isPackaged) logStream.write(msg + '\n');
+console.log = function (msg) {
+  if (app.isPackaged) logStream.write(msg + '\n');
   process.stdout.write(msg + '\n');
 };
+
+// Load the first survey on startup
+app.on('ready', () => {
+  console.log("Loading config...");
+  try {
+    config = loadConfig();
+  }
+  catch (err) {
+    console.log("Quitting due to config error: " + err.message);
+    app.quit();
+    return;
+  }
+  let SurveyID = config.SurveyID;
+  createSurveyWindow(SurveyID);
+});
+
+
+app.on('window-all-closed', (e) => {
+  if (!canKill) {
+    e.preventDefault();
+    //Poll every 5 seconds to see if we can close
+    const interval = setInterval(() => {
+      if (canKill) {
+        clearInterval(interval);
+        console.log("See ya later!");
+        app.quit();
+      }
+    }, 5000);
+  }
+  else {
+    console.log("See ya later!");
+    app.quit();
+  }
+});
 
 function createSurveyWindow(surveyID: string) {
   mainWindow = new BrowserWindow({
@@ -99,8 +134,7 @@ ipcMain.on('start-recording', (event, arg) => {
   //Fire up obs
   console.log("Starting OBS...");
   obs.initialize(micName, debugWindow);
-  if(debugWindow) debugWindow.webContents.send("encoders", obs.GetEncoders());
-  mic.start(micName);
+  if (debugWindow) debugWindow.webContents.send("encoders", obs.GetEncoders());
   obs.start();
   recordingWindow.close();
 
@@ -109,51 +143,16 @@ ipcMain.on('start-recording', (event, arg) => {
   canKill = false;
 
   //When the game closes, stop OBS + open post survey
-  gameProcess.on('close', () => {
+  gameProcess.on('close', async () => {
     hasFinishedGame = true;
     debugWindow.close();
     createSurveyWindow(config.PostSurveyID);
     obs.stop();
-    mic.stop();
     obs.shutdown();
-
+    await ripMic();
     canKill = true;
     // UploadVideo(config).then(() => {
     //   canKill = true;
     // });
   });
-});
-
-// Load the first survey on startup
-app.on('ready', () => {
-  console.log("Loading config...");
-  try {
-    config = loadConfig();
-  }
-  catch (err) {
-    console.log("Quitting due to config error: "+ err.message);
-    app.quit();
-    return;
-  }
-  let SurveyID = config.SurveyID;
-  createSurveyWindow(SurveyID);
-});
-
-
-app.on('window-all-closed', (e) => {
-  if (!canKill) {
-    e.preventDefault();
-    //Poll every 5 seconds to see if we can close
-    const interval = setInterval(() => {
-      if (canKill) {
-        clearInterval(interval);
-        console.log("See ya later!");
-        app.quit();
-      }
-    }, 5000);
-  }
-  else {
-    console.log("See ya later!");
-    app.quit();
-  }
 });

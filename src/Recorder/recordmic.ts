@@ -1,3 +1,5 @@
+//Not used anymore in favour of track splitting
+
 import ffmpeg from 'fluent-ffmpeg';
 import { app } from 'electron';
 import path from 'path';

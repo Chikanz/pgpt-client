@@ -11,7 +11,7 @@ import { app } from 'electron';
 const videoPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || app.getAppPath(), "recording");
 
 let obsInitialized = false;
-let scene = null;
+let scene: osn.IScene;
 
 // When packaged, we need to fix some paths
 function fixPathWhenPackaged(p) {
@@ -282,11 +282,12 @@ function getAudioDevices(type, subtype, deviceName = null) {
   dummyDevice.release();
   return devices;
 };
-function setupSources(micname : string) {
+
+function setupSources(micname: string) {
   osn.Global.setOutputSource(1, scene);
 
   setSetting('Output', 'Track1Name', 'Mixed: all sources');
-  let currentTrack = 2;
+  setSetting('Output', 'Track2Name', 'Mic Only');
 
   getAudioDevices(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio').forEach(metadata => {
     if (metadata.device_id === 'default') return;
@@ -295,25 +296,21 @@ function setupSources(micname : string) {
     fader.attach(source);
     fader.mul = 0.2;
 
-    setSetting('Output', `Track${currentTrack}Name`, metadata.name);
-    source.audioMixers = 1 | (1 << currentTrack - 1); // Bit mask to output to only tracks 1 and current track
-    osn.Global.setOutputSource(currentTrack, source);
-    currentTrack++;
+    source.audioMixers = 1; // Bit mask to output only to track 1
+    osn.Global.setOutputSource(1, source);
   });
-
 
   getAudioDevices(byOS({ [OS.Windows]: 'wasapi_input_capture', [OS.Mac]: 'coreaudio_input_capture' }), 'mic-audio', micname).forEach(metadata => {
     if (metadata.device_id === 'default') return;
-    console.log(metadata);
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_input_capture', [OS.Mac]: 'coreaudio_input_capture' }), 'mic-audio', { device_id: metadata.device_id });
-    setSetting('Output', `Track${currentTrack}Name`, metadata.name);
-    source.audioMixers = 1 | (1 << currentTrack - 1); // Bit mask to output to only tracks 1 and current track
-    osn.Global.setOutputSource(currentTrack, source);
-    currentTrack++;
+    source.audioMixers = 1 | 2; // Bit mask to output to both track 1 and track 2
+    osn.Global.setOutputSource(2, source);
   });
 
-  setSetting('Output', 'RecTracks', parseInt('1'.repeat(currentTrack - 1), 2)); // Bit mask of used tracks: 1111 to use first four (from available six)
+  setSetting('Output', 'RecTracks', 3); // Bit mask of used tracks: '11' for first two tracks
 }
+
+
 
 const displayId = 'display1';
 
