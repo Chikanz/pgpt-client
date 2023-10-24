@@ -104,13 +104,13 @@ ipcMain.on('start-recording', (event, arg) => {
   const cameraName = arg[1]; //todo
 
   //Create the recording dir
-  console.log("Opening OBS debug window...");
+  // console.log("Opening OBS debug window...");
   const recPath = path.join(rootExePath, 'recording');
   fs.mkdirSync(recPath, { recursive: true })
 
   //if debug open obs debug window
   let debugWindow: BrowserWindow;
-  if (process.env.DEBUG || true) {
+  if (process.env.DEBUG) {
     console.log("Opening OBS debug window...");
     debugWindow = new BrowserWindow({
       width: 800,
@@ -145,14 +145,13 @@ ipcMain.on('start-recording', (event, arg) => {
   //When the game closes, stop OBS + open post survey
   gameProcess.on('close', async () => {
     hasFinishedGame = true;
-    debugWindow.close();
+    if (process.env.DEBUG) debugWindow.close();
     createSurveyWindow(config.PostSurveyID);
     obs.stop();
     obs.shutdown();
     await ripMic();
-    canKill = true;
-    // UploadVideo(config).then(() => {
-    //   canKill = true;
-    // });
+    UploadVideo(config).then(() => {
+      canKill = true;
+    });
   });
 });

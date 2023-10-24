@@ -7,8 +7,7 @@ import * as osn from 'obs-studio-node';
 import { v4 as uuid } from 'uuid';
 import fs from 'fs';
 import { app } from 'electron';
-
-const videoPath = path.join(process.env.PORTABLE_EXECUTABLE_DIR! || app.getAppPath(), "recording");
+import { recordingPath } from '../paths';
 
 let obsInitialized = false;
 let scene: osn.IScene;
@@ -82,7 +81,7 @@ function configureOBS() {
   setSetting('Output', 'Mode', 'Advanced');
   const availableEncoders = GetEncoders();
   setSetting('Output', 'RecEncoder', prioritizeEncoder(availableEncoders));
-  setSetting('Output', 'RecFilePath', videoPath);
+  setSetting('Output', 'RecFilePath', recordingPath);
   setSetting('Output', 'RecFormat', 'mp4');
   const bitrate = 8000;
   setSetting('Output', 'Recbitrate', bitrate);
@@ -283,12 +282,13 @@ function getAudioDevices(type, subtype, deviceName = null) {
   return devices;
 };
 
+//idk why this works but it does lol. Still outputs extra audio tracks but oh well
 function setupSources(micname: string) {
   osn.Global.setOutputSource(1, scene);
 
   setSetting('Output', 'Track1Name', 'Mixed: all sources');
-  setSetting('Output', 'Track2Name', 'Mic Only');
 
+  let currentTrack = 2;
   getAudioDevices(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio').forEach(metadata => {
     if (metadata.device_id === 'default') return;
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio', { device_id: metadata.device_id });
@@ -296,18 +296,20 @@ function setupSources(micname: string) {
     fader.attach(source);
     fader.mul = 0.2;
 
-    source.audioMixers = 1; // Bit mask to output only to track 1
-    osn.Global.setOutputSource(1, source);
+    source.audioMixers = 1; // Bit mask to output to only tracks 1 and current track
+    osn.Global.setOutputSource(currentTrack, source);
+    currentTrack++;
   });
 
   getAudioDevices(byOS({ [OS.Windows]: 'wasapi_input_capture', [OS.Mac]: 'coreaudio_input_capture' }), 'mic-audio', micname).forEach(metadata => {
     if (metadata.device_id === 'default') return;
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_input_capture', [OS.Mac]: 'coreaudio_input_capture' }), 'mic-audio', { device_id: metadata.device_id });
+    setSetting('Output', 'Track2Name', 'Mic Only');
     source.audioMixers = 1 | 2; // Bit mask to output to both track 1 and track 2
-    osn.Global.setOutputSource(2, source);
+    osn.Global.setOutputSource(currentTrack, source);
   });
 
-  setSetting('Output', 'RecTracks', 3); // Bit mask of used tracks: '11' for first two tracks
+  setSetting('Output', 'RecTracks', parseInt('1'.repeat(4), 2)); // Bit mask of used tracks: 1111 to use first four (from available six)
 }
 
 

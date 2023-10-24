@@ -3,6 +3,10 @@ import { config } from "../types/config";
 // import tus from 'tus-js-client'; // idk why this doesn't work
 const tus = require('tus-js-client');
 import fs from 'fs';
+import UploadMic from "./UploadMic";
+import { app } from "electron";
+import { recordingPath } from "../paths";
+import path from "path";
 
 interface uploadResponse {
     AuthorizationSignature: string,
@@ -11,22 +15,26 @@ interface uploadResponse {
     LibraryId: string,
     Title: string,
 }
-
+const util = require('util');
 export default async function UploadVideo(config: config) {
+    console.log("Uploading video")
     //First tell server we're uploading a vid and get the key
     const res = await axios.post(`${process.env.SERVER_URL}/api/client/gameplay`, {
         TestID: config.TestID,
         PlayerID: config.PlayerID,
-    }).catch((e: AxiosError) => {
-        console.log(e.response?.data);
-        return null;
+    }).catch((err: AxiosError) => {
+        console.log("Failed to upload video because: " + err.message);
+        console.log(util.inspect(err.response.data, false, null, true /* enable colors */));
+        app.quit();
     });
+
+    if (!res) return;
+    UploadMic(config.TestID, config.PlayerID, res.data.VideoId);
 
     const UploadHeaders: uploadResponse = res.data;
 
     //OBS sets the video file to a date that we don't know so we can just find the first mp4 file in the recordings folder
-    
-    const files = fs.readdirSync(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recording`);
+    const files = fs.readdirSync(recordingPath);
     let filename;
     for (const file of files) {
         if (file.endsWith(".mp4")) {
@@ -35,7 +43,7 @@ export default async function UploadVideo(config: config) {
             break;
         }
     }
-    const file = fs.createReadStream(`${process.env.PORTABLE_EXECUTABLE_DIR! || __dirname}/recording/${filename}`)
+    const file = fs.createReadStream(path.join(recordingPath,filename))
 
     //Then upload the video using TUS
     const { Title, ...headers } = UploadHeaders;
