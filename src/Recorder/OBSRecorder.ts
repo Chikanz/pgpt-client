@@ -83,11 +83,11 @@ function configureOBS() {
   setSetting('Output', 'RecEncoder', prioritizeEncoder(availableEncoders));
   setSetting('Output', 'RecFilePath', recordingPath);
   setSetting('Output', 'RecFormat', 'mp4');
-  const bitrate = 8000;
+  const bitrate = 5000;
   setSetting('Output', 'Recbitrate', bitrate);
   setSetting('Output', 'Recmax_bitrate', bitrate);
   setSetting('Video', 'FPSType', "Integer FPS Value");
-  setSetting('Video', 'FPSInt', 50);
+  setSetting('Video', 'FPSInt', 45);
 
   console.debug('OBS Configured');
 }
