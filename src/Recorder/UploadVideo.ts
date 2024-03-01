@@ -19,7 +19,7 @@ const util = require('util');
 export default async function UploadVideo(config: config) {
     console.log("Uploading video")
     //First tell server we're uploading a vid and get the key
-    const res = await axios.post(`${process.env.SERVER_URL}/api/client/UploadGameplay`, {
+    const res = await axios.post(`${config.RootURL}/api/client/UploadGameplay`, {
         TestID: config.TestID,
         PlayerID: config.PlayerID,
     }).catch((err: AxiosError) => {
@@ -29,7 +29,7 @@ export default async function UploadVideo(config: config) {
     });
 
     if (!res) return;
-    UploadMic(config.TestID, config.PlayerID, res.data.VideoId);
+    UploadMic(config, res.data.VideoId);
 
     const UploadHeaders: uploadResponse = res.data;
 

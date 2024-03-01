@@ -23,6 +23,7 @@
     "rxjs": "^6.6.3",
     "tus-js-client": "^3.1.1",
     "uuid": "^8.3.0",
+    "yauzl": "^3.1.1",
     "zod": "^3.22.2"
   },
   "devDependencies": {
@@ -33,14 +34,13 @@
     "@electron-forge/maker-zip": "^6.2.1",
     "@electron-forge/plugin-auto-unpack-natives": "^6.2.1",
     "@types/fluent-ffmpeg": "^2.1.22",
-    "electron": "25.3.0",
-    "electron-builder": "^24.4.0",
+    "electron": "^25.9.8",
+    "electron-builder": "^24.12.0",
     "ncp": "^2.0.0",
     "typescript": "^5.1.6"
   },
   "build": {
     "appId": "pgpt-client",
-    "compression": "store",
     "win": {
       "target": "portable"
     },

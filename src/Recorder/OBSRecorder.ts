@@ -138,7 +138,6 @@ function stopVirtualCam() {
 }
 
 
-
 // Get information about prinary display
 function displayInfo() {
   const { screen } = require('electron');

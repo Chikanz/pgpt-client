@@ -13,6 +13,8 @@ import mic from './Recorder/recordmic';
 import fs from 'fs';
 import { rootExePath } from './paths';
 import ripMic from './Recorder/ripMic';
+import yauzl from 'yauzl';
+import unzip from './unzip';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -38,8 +40,10 @@ app.on('ready', () => {
     app.quit();
     return;
   }
-  let SurveyID = config.SurveyID;
-  createSurveyWindow(SurveyID);
+  createSurveyWindow(config.PreSurveyID);
+
+  //Unzip game.zip in background using yazul
+  unzip('game.zip', 'game');
 });
 
 
@@ -76,7 +80,7 @@ function createSurveyWindow(surveyID: string) {
   mainWindow.setFullScreen(true);
 
   // Use the surveyID to form the URL
-  const url = `http://localhost:5173/s/${surveyID}`;
+  const url = `${config.RootURL}/s/${surveyID}?pid=${config.PlayerID}`;
   console.log(`\n\n\n\n${url}`);
   mainWindow.loadURL(url);
 

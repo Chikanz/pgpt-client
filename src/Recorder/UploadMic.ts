@@ -3,10 +3,14 @@ import fs from 'fs';
 import FormData from 'form-data';
 import { app } from 'electron/main';
 import { recordingPath } from '../paths';
+import { config } from '../types/config';
 
-export default async function UploadMic(TestID: string, PlayerID: string, GameplayID: string) {
+export default async function UploadMic(config: config, GameplayID : string) {
+
+    const { TestID, PlayerID } = config;
+
     console.log("Uploading mic...");
-    const url = `${process.env.SERVER_URL}/api/client/transcribe`; // Replace with your actual endpoint URL
+    const url = `${config.RootURL}/api/client/transcribe`;
     const filePath = `${recordingPath}/mic.webm`;
 
     const formData = new FormData();
