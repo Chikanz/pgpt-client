@@ -8,9 +8,9 @@ document.addEventListener('DOMContentLoaded', () => {
     const videoElement = document.getElementById('preview') as HTMLVideoElement;
     const videoToggle = document.getElementById('videoToggle');
     const startButton = document.getElementById('start');
-    let videoEnabled = false;
+    let videoEnabled = true;
 
-    videoElement.style.display = 'none';
+    // videoElement.style.display = 'none';
 
     navigator.mediaDevices.enumerateDevices()
         .then(devices => {
@@ -25,13 +25,13 @@ document.addEventListener('DOMContentLoaded', () => {
                     camerasSelect.appendChild(option.cloneNode(true));
                 }
             });
-        });
+        }).then(() => updatePreview());
 
-    videoToggle.addEventListener('click', () => {
-        videoEnabled = !videoEnabled;
-        videoElement.style.display = videoEnabled ? 'block' : 'none';
-        updatePreview();
-    });
+    // videoToggle.addEventListener('click', () => {
+    //     videoEnabled = !videoEnabled;
+    //     videoElement.style.display = videoEnabled ? 'block' : 'none';
+    //     updatePreview();
+    // });
 
     microphonesSelect.addEventListener('change', updatePreview);
     camerasSelect.addEventListener('change', updatePreview);

@@ -5,7 +5,7 @@
   "description": "Desktop client for Pretty good playtesting",
   "main": "src/index.js",
   "scripts": {
-    "dev": "node scripts/build.js && electron ./dist/ts/index.js",
+    "dev": "node scripts/dev.js && electron ./dist/ts/index.js",
     "build": "node scripts/build.js && electron-builder build --win portable"
   },
   "keywords": [],
@@ -37,6 +37,7 @@
     "electron": "^25.9.8",
     "electron-builder": "^24.12.0",
     "ncp": "^2.0.0",
+    "tailwindcss": "^3.4.1",
     "typescript": "^5.1.6"
   },
   "build": {
@@ -52,16 +53,17 @@
       "output": "dist"
     },
     "files": [
-      "dist/ts/**/*",
+      "dist/build/**/*",
       "!dist/ts/Game/**/*",
       "!dist/ts/Recorder/recordings/**/*",
       "./package.json"
     ],
     "extraMetadata": {
-      "main": "dist/ts/index.js"
+      "main": "dist/build/index.js"
     },
     "extraResources": [
       "bin/**"
-    ]
+    ],
+    "afterPack": "./removeLocales.js"
   }
 }

@@ -10,7 +10,7 @@ export default function LaunchGame(gamePath: string | null) {
         ? path.join(process.env.PORTABLE_EXECUTABLE_DIR! || exePath, "game")
         : path.join(__dirname, "game");
 
-    console.log(gameFolder);
+    console.log("Game Folder:" + gameFolder);
 
     if (!gamePath) {
         const files = fs.readdirSync(gameFolder);
@@ -24,9 +24,9 @@ export default function LaunchGame(gamePath: string | null) {
     }
 
     const fullGamePath = path.join(gameFolder, gamePath);
-    console.log(fullGamePath);
+    console.log("Running:" + fullGamePath);
 
-    const gameProcess = exec(fullGamePath, (error, stdout, stderr) => {
+    const gameProcess = exec(`"${fullGamePath}"`, (error, stdout, stderr) => {
         if (error) {
             console.error(`Error executing .exe: ${error}`);
             return;

@@ -5,7 +5,7 @@ const envFile = app.isPackaged ? '.env.production' : ".env.development";
 dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
 import LaunchGame from './LaunchGame';
-import OpenRecordingSelector from './Recorder/StartRecorder';
+import OpenInputSelector from './Recorder/StartRecorder';
 import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
 import * as obs from './Recorder/OBSRecorder';
@@ -15,6 +15,7 @@ import { rootExePath } from './paths';
 import ripMic from './Recorder/ripMic';
 import yauzl from 'yauzl';
 import unzip from './unzip';
+import GetVideoPath from './Recorder/GetVideoPath';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -97,7 +98,7 @@ ipcMain.on('survey-completed', (event, arg) => {
 
   if (!hasFinishedGame) {
     //Open a window for the user to select their microphone and camera
-    recordingWindow = OpenRecordingSelector();
+    recordingWindow = OpenInputSelector();
   }
 });
 
@@ -153,8 +154,10 @@ ipcMain.on('start-recording', (event, arg) => {
     createSurveyWindow(config.PostSurveyID);
     obs.stop();
     obs.shutdown();
-    await ripMic();
-    UploadVideo(config).then(() => {
+    
+    const videoPath = GetVideoPath();
+    await ripMic(videoPath);
+    UploadVideo(videoPath, config).then(() => {
       canKill = true;
     });
   });

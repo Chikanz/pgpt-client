@@ -1,19 +1,49 @@
 <!DOCTYPE html>
 <html>
   <head>
-    <!-- Include render script -->
-    <!-- <script defer type="module" src="../Recorder/Render.js"></script> -->
+    <!-- Include tailwind css -->
+    <link href="./css/output.css" rel="stylesheet" />
+    <link href="./css/full.min.css" rel="stylesheet" />
   </head>
-  <body>
-    <h1>Please select your input devices</h1>
-    <select id="microphones"></select>
-    <select id="cameras"></select>
+  <!-- <body class="flex flex-col items-center justify-center gap-5 text-white h-full">
+    <h1 class="text-xl">Please select your input devices</h1>
+    <select id="microphones" class="select select-bordered w-full "></select>
+    <select id="cameras" class="select select-bordered w-full "></select>
     <button id="videoToggle">Enable webcam? Your reactions are really helpful to the developers, but this is optional.</button>
-    <video id="preview" autoplay></video>
+    <video id="preview" autoplay muted></video>
 
     <button id="start">Start the game!</button>
 
-    <!-- <video muted></video> -->
+  </body> -->
+
+  <body    class="flex flex-col mx-auto container items-center justify-center gap-5 text-white h-screen w-full"
+  >
+    <h1 class="text-2xl mb-6">Please select your input devices</h1>
+    <div class="max-w-lg flex flex-col gap-6">
+      <label class="form-control w-full ">
+        <div class="label">
+          <span class="label-text">Microphone</span>
+        </div>
+        <select id="microphones" class="select select-bordered"></select>
+      </label>
+
+      <label class="form-control w-full ">
+        <div class="label">
+          <span class="label-text">Webcam</span>
+        </div>
+        <select id="cameras" class="select select-bordered" ></select>
+      </label>
+
+      <video
+        id="preview"
+        class="rounded"
+        autoplay
+        muted
+      ></video>
+      <button id="start" class="btn btn-primary w-full  normal-case">
+        Play
+      </button>
+    </div>
   </body>
   <script>
     require("../Recorder/InputSelector.js");

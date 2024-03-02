@@ -16,7 +16,7 @@ interface uploadResponse {
     Title: string,
 }
 const util = require('util');
-export default async function UploadVideo(config: config) {
+export default async function UploadVideo(videoPath : string, config: config) {
     console.log("Uploading video")
     //First tell server we're uploading a vid and get the key
     const res = await axios.post(`${config.RootURL}/api/client/UploadGameplay`, {
@@ -32,18 +32,7 @@ export default async function UploadVideo(config: config) {
     UploadMic(config, res.data.VideoId);
 
     const UploadHeaders: uploadResponse = res.data;
-
-    //OBS sets the video file to a date that we don't know so we can just find the first mp4 file in the recordings folder
-    const files = fs.readdirSync(recordingPath);
-    let filename;
-    for (const file of files) {
-        if (file.endsWith(".mp4")) {
-            filename = file;
-            console.log(file);
-            break;
-        }
-    }
-    const file = fs.createReadStream(path.join(recordingPath,filename))
+    const file = fs.createReadStream(videoPath);
 
     //Then upload the video using TUS
     const { Title, ...headers } = UploadHeaders;
