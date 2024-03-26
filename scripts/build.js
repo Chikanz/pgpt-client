@@ -11,6 +11,9 @@ async function runAll() {
         fs.mkdirSync(path.dirname(targetPath), { recursive: true });
         await runCommand(`ncp bin/ ${targetPath}`); //Copy over ffmpeg + libs
 
+        //Run tailwind cli to generate css
+        await runCommand("npx tailwindcss-cli@latest build -i ./src/html/css/input.css -o ./dist/build/html/css/output.css");
+
     } catch (error) {
         console.error(`Failed to run all commands: ${error}`);
     }

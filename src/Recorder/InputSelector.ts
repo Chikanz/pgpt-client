@@ -58,16 +58,24 @@ document.addEventListener('DOMContentLoaded', () => {
         }
     }
     //Start the recording when the button is pressed  
-    startButton.addEventListener('click', () => {
+    startButton.addEventListener('click', async () => {
         //Disable the video while OBS boots up otherwise it won't work!
         videoEnabled = false;
         updatePreview(); 
+        
+        startButton.innerHTML = "Just a sec...";
+
+        //OBS sometimes just doesn't work :( so we need to wait a bit
+        await sleep(2000);
 
         const selectedMicLabel = microphonesSelect.options[microphonesSelect.selectedIndex].textContent;
         const match = selectedMicLabel.match(/\((.*?)\)/); //Get the mic name from the label
         const cleanMicName = match ? match[1] : "Unknown";
         console.log(cleanMicName);
-        startButton.innerHTML = "Just a sec..."; //todo nicer loading screen
         ipcRenderer.send('start-recording', [cleanMicName, camerasSelect.value]);
     });
 });
+
+async function sleep(ms: number) {
+    return new Promise(resolve => setTimeout(resolve, ms));
+}

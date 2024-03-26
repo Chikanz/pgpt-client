@@ -1,4 +1,4 @@
-import { BrowserWindow, app, desktopCapturer } from "electron";
+import { BrowserWindow, app } from "electron";
 import path from 'path';
 
 let RecordingWindow : BrowserWindow;
