@@ -99,6 +99,7 @@ function prioritizeEncoder(availableEncoders: string[]): string | null {
     'amd_amf_hvec',
     'amd_amf_h264',
     'ffmpeg_nvenc',
+    'obs_qsv11',
     'obs_x264',
     'none'
   ];
@@ -246,8 +247,10 @@ function setupScene() {
   sceneItem.scale = { x: 1.0 / videoScaleFactor, y: 1.0 / videoScaleFactor };
 
   // If camera is available, make it smaller and place it right in the corner of the display
-  const cameraSource = getCameraSource();
-  if (cameraSource) {
+  //Disable camera for now
+  // const cameraSource = getCameraSource();
+  const cameraSource = null;
+  if (cameraSource && false) {
     const cameraItem = scene.add(cameraSource);
 
     // Adjust this value to make the webcam view smaller
@@ -293,7 +296,7 @@ function setupSources(micname: string) {
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio', { device_id: metadata.device_id });
     const fader = osn.FaderFactory.create(0);
     fader.attach(source);
-    fader.mul = 0.2;
+    fader.mul = 0.1;
 
     source.audioMixers = 1; // Bit mask to output to only tracks 1 and current track
     osn.Global.setOutputSource(currentTrack, source);

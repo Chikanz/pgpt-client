@@ -16,7 +16,7 @@ export default function ripMic(videoPath : string): Promise<void> {
             .outputOptions(['-map 0:2', '-c:a libopus'])
             .output(path.join(outPath, 'mic.webm'))
             .on('end', () => {
-                console.log('Conversion done');
+                console.log('Done Ripping mic');
                 resolve();
             })
             .on('error', (err) => {

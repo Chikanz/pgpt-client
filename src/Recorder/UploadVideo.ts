@@ -29,7 +29,9 @@ export default async function UploadVideo(videoPath : string, config: config) {
     });
 
     if (!res) return;
-    UploadMic(config, res.data.VideoId);
+    UploadMic(config, res.data.VideoId).catch((err) => {
+        console.log("Failed to upload mic because: " + err);
+    });
 
     const UploadHeaders: uploadResponse = res.data;
     const file = fs.createReadStream(videoPath);

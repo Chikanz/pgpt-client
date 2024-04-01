@@ -29,6 +29,10 @@ console.log = function (msg) {
   if (app.isPackaged) logStream.write(msg + '\n');
   process.stdout.write(msg + '\n');
 };
+console.debug = function (msg) {
+  if (app.isPackaged) logStream.write(msg + '\n');
+  if(process.env.DEBUG) process.stdout.write(msg + '\n');
+};
 
 // Load the first survey on startup
 app.on('ready', () => {
@@ -43,25 +47,29 @@ app.on('ready', () => {
   }
   createSurveyWindow(config.PreSurveyID);
 
+  //TODO try catch and delete game zip after done 
   //Unzip game.zip in background using yazul
   unzip('game.zip', 'game');
 });
 
 
 app.on('window-all-closed', (e) => {
+  console.log("All windows closed")
   if (!canKill) {
     e.preventDefault();
     //Poll every 5 seconds to see if we can close
-    const interval = setInterval(() => {
-      if (canKill) {
-        clearInterval(interval);
-        console.log("See ya later!");
-        app.quit();
-      }
-    }, 5000);
+    if (hasFinishedGame) {
+      const interval = setInterval(() => {
+        if (canKill) {
+          clearInterval(interval);
+          console.log("See ya later! - can kill now");
+          app.quit();
+        }
+      }, 5000);
+    }
   }
   else {
-    console.log("See ya later!");
+    console.log("See ya later! - all windows closed");
     app.quit();
   }
 });
@@ -94,6 +102,7 @@ function createSurveyWindow(surveyID: string) {
 let hasFinishedGame = false;
 let recordingWindow: BrowserWindow;
 ipcMain.on('survey-completed', (event, arg) => {
+  console.log("Survey completed");
   mainWindow.close();
 
   if (!hasFinishedGame) {
@@ -103,7 +112,8 @@ ipcMain.on('survey-completed', (event, arg) => {
 });
 
 ipcMain.on('start-recording', (event, arg) => {
-  console.log("Starting recording")
+  console.log("Starting recording");
+  recordingWindow.loadFile(path.join(__dirname, 'html/loading.html'));
   //Get mic and camera name from arg
   const micName = arg[0];
   const cameraName = arg[1]; //todo
@@ -154,9 +164,15 @@ ipcMain.on('start-recording', (event, arg) => {
     createSurveyWindow(config.PostSurveyID);
     obs.stop();
     obs.shutdown();
-    
+
+    //sleep
+    await new Promise((resolve) => setTimeout(resolve, 3000));
+
     const videoPath = GetVideoPath();
-    await ripMic(videoPath);
+    await ripMic(videoPath).catch((err) => {
+      console.log("Error ripping mic: " + err.message);
+    });
+    
     UploadVideo(videoPath, config).then(() => {
       canKill = true;
     });
