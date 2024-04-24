@@ -296,7 +296,7 @@ function setupSources(micname: string) {
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio', { device_id: metadata.device_id });
     const fader = osn.FaderFactory.create(0);
     fader.attach(source);
-    fader.mul = 0.1;
+    fader.mul = 0.01;
 
     source.audioMixers = 1; // Bit mask to output to only tracks 1 and current track
     osn.Global.setOutputSource(currentTrack, source);

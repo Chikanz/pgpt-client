@@ -35,7 +35,7 @@ console.debug = function (msg) {
 };
 
 // Load the first survey on startup
-app.on('ready', () => {
+app.on('ready', async () => {
   console.log("Loading config...");
   try {
     config = loadConfig();
@@ -46,6 +46,17 @@ app.on('ready', () => {
     return;
   }
   createSurveyWindow(config.PreSurveyID);
+
+  //Uncomment to upload a vid from file 
+  // if(process.env.DEBUG) {
+  //   const videoPath = GetVideoPath();
+  //   await ripMic(videoPath).catch((err) => {
+  //     console.log("Error ripping mic: " + err.message);
+  //   });
+    
+  //   await UploadVideo(videoPath, config);
+  //   app.exit();
+  // }
 
   //TODO try catch and delete game zip after done 
   //Unzip game.zip in background using yazul

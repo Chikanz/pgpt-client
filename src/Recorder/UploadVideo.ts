@@ -28,6 +28,7 @@ export default async function UploadVideo(videoPath : string, config: config) {
         app.quit();
     });
 
+    //Upload mic audio 
     if (!res) return;
     UploadMic(config, res.data.VideoId).catch((err) => {
         console.log("Failed to upload mic because: " + err);

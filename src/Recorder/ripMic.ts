@@ -13,7 +13,7 @@ export default function ripMic(videoPath : string): Promise<void> {
     
         //Rip that shit
         ffmpeg(videoPath)
-            .outputOptions(['-map 0:2', '-c:a libopus'])
+            .outputOptions(['-map 0:2', '-c:a libopus']) //Rip mic on channel 2 (change 2 to one when uploading local files)
             .output(path.join(outPath, 'mic.webm'))
             .on('end', () => {
                 console.log('Done Ripping mic');
