@@ -9,9 +9,9 @@ export default async function UploadMic(config: config, GameplayID : string) {
 
     const { TestID, PlayerID } = config;
 
-    console.log("Uploading mic...");
     const url = `${config.RootURL}/api/client/transcribe`;
     const filePath = `${recordingPath}/mic.webm`;
+    console.log("Uploading mic " + filePath + " to " + url + " with TestID " + TestID + " and PlayerID " + PlayerID + " and GameplayID " + GameplayID);
 
     const formData = new FormData();
     formData.append('TestID', TestID);
@@ -39,7 +39,6 @@ export default async function UploadMic(config: config, GameplayID : string) {
         console.log(`Data: ${response.data}`);
     })
     .catch(error => {
-        console.error('Error uploading file:', error.message);
-        app.quit();
+        console.error('Error uploading mic:', error.message);
     });
 }
