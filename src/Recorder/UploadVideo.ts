@@ -16,16 +16,15 @@ interface uploadResponse {
     Title: string,
 }
 const util = require('util');
-export default async function UploadVideo(videoPath : string, config: config) {
+export default async function UploadVideo(videoPath: string, config: config) {
     console.log("Uploading video")
-    //First tell server we're uploading a vid and get the key
+    // First tell server we're uploading a vid and get the key
     const res = await axios.post(`${config.RootURL}/api/client/UploadGameplay`, {
         TestID: config.TestID,
         PlayerID: config.PlayerID,
     }).catch((err: AxiosError) => {
         console.log("Failed to upload video because: " + err.message);
         console.log(util.inspect(err.response.data, false, null, true /* enable colors */));
-        app.quit();
     });
 
     //Upload mic audio 

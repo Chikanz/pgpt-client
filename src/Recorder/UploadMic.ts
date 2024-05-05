@@ -11,7 +11,13 @@ export default async function UploadMic(config: config, GameplayID : string) {
 
     const url = `${config.RootURL}/api/client/transcribe`;
     const filePath = `${recordingPath}/mic.webm`;
-    console.log("Uploading mic " + filePath + " to " + url + " with TestID " + TestID + " and PlayerID " + PlayerID + " and GameplayID " + GameplayID);
+    console.log("Uploading mic " + filePath + " to " + url);
+
+    //Double check the file exists
+    if (!fs.existsSync(filePath)) {
+        console.error('Mic file does not exist!');
+        return;
+    }
 
     const formData = new FormData();
     formData.append('TestID', TestID);

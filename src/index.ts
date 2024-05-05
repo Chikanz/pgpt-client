@@ -55,7 +55,8 @@ app.on('ready', async () => {
   //   });
     
   //   await UploadVideo(videoPath, config);
-  //   app.exit();
+  //   // console.log("See ya later!")
+  //   // app.exit();
   // }
 
   //TODO try catch and delete game zip after done 
