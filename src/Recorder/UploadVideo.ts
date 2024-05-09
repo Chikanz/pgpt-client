@@ -17,6 +17,12 @@ interface uploadResponse {
 }
 const util = require('util');
 export default async function UploadVideo(videoPath: string, config: config) {
+    
+    if(process.env.noupload){
+        console.log("Skipping upload due to noupload env var")
+        return;
+    }
+
     console.log("Uploading video")
     // First tell server we're uploading a vid and get the key
     const res = await axios.post(`${config.RootURL}/api/client/UploadGameplay`, {
@@ -59,7 +65,10 @@ async function TUSUpload(file: fs.ReadStream, headers: headers, title: string) {
             },
             onError: reject,
             onProgress: function (bytesUploaded, bytesTotal) {
-                console.log("Progress: " + (bytesUploaded / bytesTotal * 100).toFixed(2) + "%")
+                const progress = (bytesUploaded / bytesTotal * 100).toFixed(2);
+                if (progress.includes('.0')) {
+                    console.log("Progress: " + progress + "%");
+                }
             },
             onSuccess: resolve
         })

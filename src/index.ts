@@ -31,7 +31,7 @@ console.log = function (msg) {
 };
 console.debug = function (msg) {
   if (app.isPackaged) logStream.write(msg + '\n');
-  if(process.env.DEBUG) process.stdout.write(msg + '\n');
+  if (process.env.DEBUG) process.stdout.write(msg + '\n');
 };
 
 // Load the first survey on startup
@@ -45,23 +45,28 @@ app.on('ready', async () => {
     app.quit();
     return;
   }
+  //Start the playtest by opening the first survey
   createSurveyWindow(config.PreSurveyID);
-
-  //Uncomment to upload a vid from file 
-  // if(process.env.DEBUG) {
-  //   const videoPath = GetVideoPath();
-  //   await ripMic(videoPath).catch((err) => {
-  //     console.log("Error ripping mic: " + err.message);
-  //   });
-    
-  //   await UploadVideo(videoPath, config);
-  //   // console.log("See ya later!")
-  //   // app.exit();
-  // }
 
   //TODO try catch and delete game zip after done 
   //Unzip game.zip in background using yazul
   unzip('game.zip', 'game');
+
+  //Uncomment to upload a vid from file 
+  // if (process.env.DEBUG) {
+    // const videoPath = GetVideoPath();
+    // // For manually uploading mic
+    // // UploadMic(config, "...").catch((err) => {
+      // // console.log("Failed to upload mic because: " + err);
+    // // });
+    // await ripMic(videoPath, 1).catch((err) => {
+    //   console.log("Error ripping mic: " + err.message);
+    // });
+
+    // await UploadVideo(videoPath, config);
+    // console.log("See ya later!")
+    // app.exit();
+  // }
 });
 
 
@@ -181,10 +186,10 @@ ipcMain.on('start-recording', (event, arg) => {
     await new Promise((resolve) => setTimeout(resolve, 3000));
 
     const videoPath = GetVideoPath();
-    await ripMic(videoPath).catch((err) => {
+    await ripMic(videoPath, 2).catch((err) => {
       console.log("Error ripping mic: " + err.message);
     });
-    
+
     UploadVideo(videoPath, config).then(() => {
       canKill = true;
     });

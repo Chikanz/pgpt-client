@@ -5,9 +5,8 @@ import { byOS, OS, getOS } from './operating-systems';
 
 import * as osn from 'obs-studio-node';
 import { v4 as uuid } from 'uuid';
-import fs from 'fs';
-import { app } from 'electron';
 import { recordingPath } from '../paths';
+import {  Display, Size, screen } from 'electron';
 
 let obsInitialized = false;
 let scene: osn.IScene;
@@ -141,7 +140,6 @@ function stopVirtualCam() {
 
 // Get information about prinary display
 function displayInfo() {
-  const { screen } = require('electron');
   const primaryDisplay = screen.getPrimaryDisplay();
   const { width, height } = primaryDisplay.size;
   const { scaleFactor } = primaryDisplay;
@@ -225,21 +223,24 @@ function getCameraSource() {
 function setupScene() {
   const videoSource = osn.InputFactory.create(byOS({ [OS.Windows]: 'monitor_capture', [OS.Mac]: 'display_capture' }), 'desktop-video');
 
-  const { physicalWidth, physicalHeight, aspectRatio } = displayInfo();
+  const displays = getAvailableDisplays();
+  const primaryDisplay = displays.find(display => display.primary);
 
   // Update source settings:
   let settings = videoSource.settings;
-  settings['width'] = physicalWidth;
-  settings['height'] = physicalHeight;
+  settings.monitor = primaryDisplay.index;
+  settings.capture_cursor = false;
+  settings['width'] = primaryDisplay.physicalSize.width;
+  settings['height'] = primaryDisplay.physicalSize.height;
   videoSource.update(settings);
   videoSource.save();
 
   // Set output video size to 1920x1080
   const outputWidth = 1920;
-  const outputHeight = Math.round(outputWidth / aspectRatio);
+  const outputHeight = Math.round(outputWidth / primaryDisplay.aspectRatio);
   setSetting('Video', 'Base', `${outputWidth}x${outputHeight}`);
   setSetting('Video', 'Output', `${outputWidth}x${outputHeight}`);
-  const videoScaleFactor = physicalWidth / outputWidth;
+  const videoScaleFactor = primaryDisplay.physicalSize.width / outputWidth;
 
   // A scene is necessary here to properly scale captured screen size to output video size
   const scene = osn.SceneFactory.create('test-scene');
@@ -296,7 +297,7 @@ function setupSources(micname: string) {
     const source = osn.InputFactory.create(byOS({ [OS.Windows]: 'wasapi_output_capture', [OS.Mac]: 'coreaudio_output_capture' }), 'desktop-audio', { device_id: metadata.device_id });
     const fader = osn.FaderFactory.create(0);
     fader.attach(source);
-    fader.mul = 0.01;
+    fader.mul = 0.05;
 
     source.audioMixers = 1; // Bit mask to output to only tracks 1 and current track
     osn.Global.setOutputSource(currentTrack, source);
@@ -484,6 +485,75 @@ function busySleep(sleepDuration) {
   var now = new Date().getTime();
   while (new Date().getTime() < now + sleepDuration) { /* do nothing */ };
 }
+
+type OurDisplayType = {
+  id: number;
+  index: number;
+  // physicalPosition: string;
+  primary: boolean;
+  displayFrequency: number;
+  depthPerComponent: number;
+  size: Size;
+  physicalSize: Size;
+  aspectRatio: number;
+  scaleFactor: number;
+};
+
+// Stole this absolutely GOATED code from https://github.dev/aza547/wow-recorder
+/**
+ * Get and return a list of available displays on the system sorted by their
+ * physical position.
+ *
+ * This makes no attempts at being perfect - it completely ignores the `bounds.y`
+ * property for people who might have stacked their displays vertically rather than
+ * horizontally. This is okay.
+ */
+const getAvailableDisplays = (): OurDisplayType[] => {
+  const primaryDisplay = screen.getPrimaryDisplay();
+  const allDisplays = screen.getAllDisplays();
+
+  // Create an unsorted list of Display IDs to zero based monitor index
+  // So we're can use that index later, after sorting the displays according
+  // to their physical location.
+  const displayIdToIndex: { [key: number]: number } = {};
+
+  allDisplays.forEach((display: Display, index: number) => {
+    displayIdToIndex[display.id] = index;
+  });
+
+  // Iterate over all available displays and make our own list with the
+  // relevant attributes and some extra stuff to make it easier for the
+  // frontend.
+  const ourDisplays: OurDisplayType[] = [];
+  const numberOfMonitors = allDisplays.length;
+
+  allDisplays
+    .sort((A: Display, B: Display) => A.bounds.x - B.bounds.x)
+    .forEach((display: Display, index: number) => {
+      const isPrimary = display.id === primaryDisplay.id;
+      const displayIndex = displayIdToIndex[display.id];
+      const { width, height } = display.size;
+
+      ourDisplays.push({
+        id: display.id,
+        index: displayIndex,
+        // physicalPosition: getDisplayPhysicalPosition(numberOfMonitors, index),
+        primary: isPrimary,
+        displayFrequency: display.displayFrequency,
+        depthPerComponent: display.depthPerComponent,
+        size: display.size,
+        scaleFactor: display.scaleFactor,
+        aspectRatio: width / height,
+        physicalSize: {
+          width: Math.floor(width * display.scaleFactor),
+          height: Math.floor(height * display.scaleFactor),
+        },
+      });
+    });
+
+  return ourDisplays;
+};
+
 
 export { 
   initialize,
