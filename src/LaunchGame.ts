@@ -3,27 +3,7 @@ import path from 'path';
 import fs from 'fs';
 import {exec} from 'child_process';
 
-export default function LaunchGame(gamePath: string | null) {
-
-    const exePath = app.getPath('exe');
-    const gameFolder = app.isPackaged
-        ? path.join(process.env.PORTABLE_EXECUTABLE_DIR! || exePath, "game")
-        : path.join(__dirname, "game");
-
-    console.log("Game Folder:" + gameFolder);
-
-    if (!gamePath) {
-        const files = fs.readdirSync(gameFolder);
-        for (const file of files) {
-          if (file.endsWith(".exe")) {
-            gamePath = file;
-            console.log(file);
-            break;
-          }
-        }
-    }
-
-    const fullGamePath = path.join(gameFolder, gamePath);
+export function LaunchGame(fullGamePath: string) {
     console.log("Running:" + fullGamePath);
 
     const gameProcess = exec(`"${fullGamePath}"`, (error, stdout, stderr) => {
@@ -36,4 +16,28 @@ export default function LaunchGame(gamePath: string | null) {
     });
 
     return gameProcess;
+}
+
+//Takes in a gamepath from config
+export function GetGamePath(exeName: string | null){
+    const exePath = app.getPath('exe');
+    const gameFolder = app.isPackaged
+        ? path.join(process.env.PORTABLE_EXECUTABLE_DIR! || exePath, "game")
+        : path.join(__dirname, "game");
+
+    console.log("Game Folder:" + gameFolder);
+
+    if (!exeName) {
+        const files = fs.readdirSync(gameFolder);
+        for (const file of files) {
+          if (file.endsWith(".exe")) {
+            exeName = file;
+            console.log(file);
+            break;
+          }
+        }
+    }
+
+    const fullGamePath = path.join(gameFolder, exeName);
+    return {fullGamePath, exeName};
 }

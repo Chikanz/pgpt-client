@@ -1,10 +1,10 @@
-import { app, BrowserWindow, desktopCapturer, dialog, ipcMain } from 'electron';
+import { app, BrowserWindow, desktopCapturer, dialog, ipcMain, Notification } from 'electron';
 import dotenv from 'dotenv';
 import path from 'path';
 const envFile = app.isPackaged ? '.env.production' : ".env.development";
 dotenv.config({ path: envFile });
 import loadConfig from './loadConfig';
-import LaunchGame from './LaunchGame';
+import { GetGamePath, LaunchGame } from './LaunchGame';
 import OpenInputSelector from './Recorder/StartRecorder';
 import UploadVideo from './Recorder/UploadVideo';
 import type { config as configType } from './types/config';
@@ -79,6 +79,14 @@ app.on('window-all-closed', (e) => {
       const interval = setInterval(() => {
         if (canKill) {
           clearInterval(interval);
+
+          const notification = new Notification({
+            title: "Your playtest has been uploaded",
+            body: 'Thanks for playing!'
+          });
+        
+          notification.show();
+
           console.log("See ya later! - can kill now");
           app.quit();
         }
@@ -128,7 +136,7 @@ ipcMain.on('survey-completed', (event, arg) => {
   }
 });
 
-ipcMain.on('start-recording', (event, arg) => {
+ipcMain.on('start-recording', async (event, arg) => {
   console.log("Starting recording");
   recordingWindow.loadFile(path.join(__dirname, 'html/loading.html'));
   //Get mic and camera name from arg
@@ -163,16 +171,25 @@ ipcMain.on('start-recording', (event, arg) => {
     });
   }
 
+  
   //Fire up obs
+  const {fullGamePath, exeName} = GetGamePath(config.GamePath);
   console.log("Starting OBS...");
-  obs.initialize(micName, debugWindow);
+  obs.initialize(micName, exeName, debugWindow);
   if (debugWindow) debugWindow.webContents.send("encoders", obs.GetEncoders());
+
+  //Start game before recording so hopefully we don't accidentally get the user's monitor beforehand
+  const gameProcess = LaunchGame(fullGamePath);
+  canKill = false;
+
+  await sleep(1000);
+
   obs.start();
   recordingWindow.close();
 
   //Start the game
-  const gameProcess = LaunchGame(config.GamePath);
-  canKill = false;
+  // const gameProcess = LaunchGame(fullGamePath);
+  // canKill = false;
 
   //When the game closes, stop OBS + open post survey
   gameProcess.on('close', async () => {
@@ -195,3 +212,9 @@ ipcMain.on('start-recording', (event, arg) => {
     });
   });
 });
+
+
+async function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+

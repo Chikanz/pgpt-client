@@ -6,7 +6,7 @@ import { byOS, OS, getOS } from './operating-systems';
 import * as osn from 'obs-studio-node';
 import { v4 as uuid } from 'uuid';
 import { recordingPath } from '../paths';
-import {  Display, Size, screen } from 'electron';
+import { Display, Size, screen } from 'electron';
 
 let obsInitialized = false;
 let scene: osn.IScene;
@@ -17,7 +17,7 @@ function fixPathWhenPackaged(p) {
 }
 
 // Init the library, launch OBS Studio instance, configure it, set up sources and scene
-function initialize(micname: string, win?: Electron.BrowserWindow) {
+function initialize(micname: string, processName: string, win?: Electron.BrowserWindow) {
   if (obsInitialized) {
     console.warn("OBS is already initialized, skipping initialization.");
     return;
@@ -25,11 +25,11 @@ function initialize(micname: string, win?: Electron.BrowserWindow) {
 
   initOBS();
   configureOBS();
-  scene = setupScene();
+  scene = setupScene(processName);
   setupSources(micname);
   obsInitialized = true;
 
-  if(win) {
+  if (win) {
     const perfStatTimer = setInterval(() => {
       win.webContents.send("performanceStatistics", osn.NodeObs.OBS_API_getPerformanceStatistics());
     }, 1000);
@@ -47,7 +47,7 @@ function initOBS() {
 
   const obsDataPath = fixPathWhenPackaged(path.join(__dirname, 'osn-data')); // OBS Studio configs and logs
   // Arguments: locale, path to directory where configuration and logs will be stored, your application version
-  const initResult = osn.NodeObs.OBS_API_initAPI('en-US', obsDataPath, '1.0.0','');
+  const initResult = osn.NodeObs.OBS_API_initAPI('en-US', obsDataPath, '1.0.0', '');
 
   if (initResult !== 0) {
     const errorReasons = {
@@ -71,7 +71,7 @@ function initOBS() {
   console.debug('OBS initialized');
 }
 
-function GetEncoders(){
+function GetEncoders() {
   return getAvailableValues('Output', 'Recording', 'RecEncoder');
 }
 
@@ -220,11 +220,32 @@ function getCameraSource() {
   return obsCameraInput;
 }
 
-function setupScene() {
-  const videoSource = osn.InputFactory.create(byOS({ [OS.Windows]: 'monitor_capture', [OS.Mac]: 'display_capture' }), 'desktop-video');
+/**
+ * Creates a game capture source.
+ */
+function createGameCaptureSource(processName:string,captureCursor: boolean) {
+  console.info('[Recorder] Configuring OBS for Game Capture');
 
-  const displays = getAvailableDisplays();
-  const primaryDisplay = displays.find(display => display.primary);
+  const gameCaptureSource = osn.InputFactory.create(
+    'game_capture',
+    'WR Game Capture'
+  );
+
+  const { settings } = gameCaptureSource;
+  settings.capture_mode = 'window';
+  settings.allow_transparency = true;
+  settings.priority = 1;
+  settings.capture_cursor = captureCursor;
+  settings.window = processName;
+
+  gameCaptureSource.update(settings);
+  gameCaptureSource.save();
+
+  return gameCaptureSource;
+}
+
+function CreateMonitorCaptureSource(primaryDisplay: OurDisplayType){
+  const videoSource = osn.InputFactory.create(byOS({ [OS.Windows]: 'monitor_capture', [OS.Mac]: 'display_capture' }), 'desktop-video');
 
   // Update source settings:
   let settings = videoSource.settings;
@@ -234,6 +255,18 @@ function setupScene() {
   settings['height'] = primaryDisplay.physicalSize.height;
   videoSource.update(settings);
   videoSource.save();
+
+  return videoSource;
+}
+
+function setupScene(processName: string) {  
+
+  const displays = getAvailableDisplays();
+  const primaryDisplay = displays.find(display => display.primary);
+
+  //Monitor capture
+  let videoSource = CreateMonitorCaptureSource(primaryDisplay);
+  // let videoSource = createGameCaptureSource(processName, true); //bruh this shit doesn't even work in the normal OBS version
 
   // Set output video size to 1920x1080
   const outputWidth = 1920;
@@ -555,7 +588,7 @@ const getAvailableDisplays = (): OurDisplayType[] => {
 };
 
 
-export { 
+export {
   initialize,
   start,
   isVirtualCamPluginInstalled,
