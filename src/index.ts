@@ -16,6 +16,7 @@ import ripMic from './Recorder/ripMic';
 import yauzl from 'yauzl';
 import unzip from './unzip';
 import GetVideoPath from './Recorder/GetVideoPath';
+import UploadMic from './Recorder/UploadMic';
 
 let config: configType;
 let mainWindow: BrowserWindow;
@@ -53,20 +54,22 @@ app.on('ready', async () => {
   unzip('game.zip', 'game');
 
   //Uncomment to upload a vid from file 
-  // if (process.env.DEBUG) {
-    // const videoPath = GetVideoPath();
-    // // For manually uploading mic
-    // // UploadMic(config, "...").catch((err) => {
-      // // console.log("Failed to upload mic because: " + err);
-    // // });
+  if (process.env.DEBUG) {
+    const videoPath = GetVideoPath();
+    
+    //It's on 1 for uploading YT videos
     // await ripMic(videoPath, 1).catch((err) => {
     //   console.log("Error ripping mic: " + err.message);
     // });
 
+    await UploadMic(config, "1d7b6e95-bdcf-4735-8383-f8d634f22394").catch((err) => {
+      console.log("Failed to upload mic because: " + err);
+    });
+
     // await UploadVideo(videoPath, config);
     // console.log("See ya later!")
     // app.exit();
-  // }
+  }
 });
 
 
@@ -181,15 +184,11 @@ ipcMain.on('start-recording', async (event, arg) => {
   //Start game before recording so hopefully we don't accidentally get the user's monitor beforehand
   const gameProcess = LaunchGame(fullGamePath);
   canKill = false;
-
+  
   await sleep(1000);
 
   obs.start();
   recordingWindow.close();
-
-  //Start the game
-  // const gameProcess = LaunchGame(fullGamePath);
-  // canKill = false;
 
   //When the game closes, stop OBS + open post survey
   gameProcess.on('close', async () => {
